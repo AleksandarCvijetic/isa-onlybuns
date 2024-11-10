@@ -20,6 +20,8 @@ public class UserInfo {
     private String name;
     private String email;
     private String password;
+    private String username;
+    private String address;
     private String roles;
 
 }
