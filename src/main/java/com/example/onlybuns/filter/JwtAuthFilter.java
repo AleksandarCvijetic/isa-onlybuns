@@ -35,7 +35,7 @@ public class JwtAuthFilter extends OncePerRequestFilter {
         // Check if the header starts with "Bearer "
         if (authHeader != null && authHeader.startsWith("Bearer ")) {
             token = authHeader.substring(7); // Extract token
-            username = jwtService.extractUsername(token); // Extract username from token
+            username = jwtService.extractEmail(token); // Extract username from token
         }
 
         // If the token is valid and no authentication is set in the context

@@ -2,7 +2,6 @@ package com.example.onlybuns.config;
 
 import com.example.onlybuns.filter.JwtAuthFilter;
 import com.example.onlybuns.service.UserInfoService;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -20,6 +19,7 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+
 
 @Configuration
 @EnableWebSecurity
@@ -48,7 +48,8 @@ public class SecurityConfig {
                 .sessionCreationPolicy(SessionCreationPolicy.STATELESS) // No sessions
             )
             .authenticationProvider(authenticationProvider()) // Custom authentication provider
-            .addFilterBefore(authFilter, UsernamePasswordAuthenticationFilter.class); // Add JWT filter
+            .addFilterBefore(authFilter, UsernamePasswordAuthenticationFilter.class) // Add JWT filter
+            .cors();
 
         return http.build();
     }
