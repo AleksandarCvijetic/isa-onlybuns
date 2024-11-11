@@ -5,32 +5,33 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.util.ArrayList;
+import java.time.ZonedDateTime;
 import java.util.List;
+import java.util.ArrayList;
 
 @Entity
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class UserInfo {
-
+public class Post {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-    private String name;
-    private String email;
-    private String password;
-    private String username;
-    private String address;
-    private String roles;
+    private String description;
+    private String image;
+    private ZonedDateTime createdAt;
 
-    @OneToMany(mappedBy = "user")
+    @OneToMany(mappedBy = "post")
     private List<Comment> comments = new ArrayList<>();
 
-    @OneToMany(mappedBy = "user")
-    private List<Post> posts = new ArrayList<>();
-
-    @OneToMany(mappedBy = "user")
+    @OneToMany(mappedBy = "post")
     private List<Like> likes = new ArrayList<>();
+
+    @ManyToOne
+    @JoinColumn(name = "user_id", nullable = false)
+    private UserInfo user;
+
+    @Embedded
+    private Location location;
 
 }
