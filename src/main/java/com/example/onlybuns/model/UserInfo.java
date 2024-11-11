@@ -23,6 +23,9 @@ public class UserInfo {
     private String username;
     private String address;
     private String roles;
+    private String activationToken;
+    private boolean isActive = false;
+
 
     @OneToMany(mappedBy = "user")
     private List<Comment> comments = new ArrayList<>();
