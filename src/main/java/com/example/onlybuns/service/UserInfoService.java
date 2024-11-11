@@ -81,5 +81,9 @@ public class UserInfoService implements UserDetailsService {
 
         return "Account activated successfully!";
     }
+
+    public UserInfo getUserByEmail(String email) {
+        return repository.findByEmail(email).orElse(null);
+    }
 }
 
