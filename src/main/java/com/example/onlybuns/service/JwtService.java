@@ -21,8 +21,9 @@ public class JwtService {
     public static final String SECRET = "5367566B59703373367639792F423F4528482B4D6251655468576D5A71347437";
 
     // Generate token with given email
-    public String generateToken(String email) {
+    public String generateToken(String email, String roles) {
         Map<String, Object> claims = new HashMap<>();
+        claims.put("role", roles);
         return createToken(claims, email);
     }
 

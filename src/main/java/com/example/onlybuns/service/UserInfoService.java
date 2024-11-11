@@ -35,5 +35,9 @@ public class UserInfoService implements UserDetailsService {
         repository.save(userInfo);
         return "User Added Successfully";
     }
+
+    public UserInfo getUserByEmail(String email) {
+        return repository.findByEmail(email).orElse(null);
+    }
 }
 

@@ -53,7 +53,8 @@ public class UserController {
             new UsernamePasswordAuthenticationToken(authRequest.getEmail(), authRequest.getPassword())
         );
         if (authentication.isAuthenticated()) {
-            return jwtService.generateToken(authRequest.getEmail());
+            UserInfo userInfo = service.getUserByEmail(authRequest.getEmail());
+            return jwtService.generateToken(authRequest.getEmail(), userInfo.getRoles());
         } else {
             throw new UsernameNotFoundException("Invalid user request!");
         }
