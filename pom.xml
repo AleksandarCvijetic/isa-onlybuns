@@ -83,6 +83,11 @@
 			<artifactId>postgresql</artifactId>
 			<version>42.5.0</version> <!-- Check for the latest version -->
 		</dependency>
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-mail</artifactId>
+		</dependency>
+
 
 	</dependencies>
 

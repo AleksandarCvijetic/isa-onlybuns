@@ -35,6 +35,11 @@ public class UserController {
         return service.addUser(userInfo);
     }
 
+    @GetMapping("/activate")
+    public String activateUser(@RequestParam("token") String token) {
+        return service.activateUser(token);
+    }
+
     @GetMapping("/user/userProfile")
     @PreAuthorize("hasAuthority('ROLE_USER')")
     public String userProfile() {

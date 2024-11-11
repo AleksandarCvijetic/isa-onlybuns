@@ -21,10 +21,10 @@ public class Post {
     private String image;
     private ZonedDateTime createdAt;
 
-    @OneToMany(mappedBy = "post")
+    @OneToMany(mappedBy = "post", fetch = FetchType.EAGER)
     private List<Comment> comments = new ArrayList<>();
 
-    @OneToMany(mappedBy = "post")
+    @OneToMany(mappedBy = "post", fetch = FetchType.EAGER)
     private List<Like> likes = new ArrayList<>();
 
     @ManyToOne
