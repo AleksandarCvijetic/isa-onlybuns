@@ -106,9 +106,17 @@ public class PostController {
     public ResponseEntity<Comment> addComment(@PathVariable Long postId,
                                               @RequestBody Comment commentRequest) {
         Post post = postService.getPostById(postId);
-        UserInfo user = userInfoService.getUserById(commentRequest.getUser().getId());
+        if (post == null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
+        }
 
-        if (post == null || user == null) {
+        // Ensure that user is not null
+        if (commentRequest.getUser() == null || commentRequest.getUser().getId() == null) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(null); // Return bad request if user info is missing
+        }
+
+        UserInfo user = userInfoService.getUserById(commentRequest.getUser().getId());
+        if (user == null) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
         }
 
@@ -123,6 +131,7 @@ public class PostController {
 
         return ResponseEntity.ok(savedComment); // Return the added comment
     }
+
     // Add a like to a
 
     @PostMapping("/{postId}/like")
