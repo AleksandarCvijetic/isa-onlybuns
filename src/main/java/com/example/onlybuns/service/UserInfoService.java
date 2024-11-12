@@ -85,5 +85,9 @@ public class UserInfoService implements UserDetailsService {
     public UserInfo getUserByEmail(String email) {
         return repository.findByEmail(email).orElse(null);
     }
+
+    public UserInfo getUserById(Long userId) {
+        return repository.findById(userId).orElse(null);
+    }
 }
 
