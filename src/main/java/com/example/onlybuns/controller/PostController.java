@@ -1,14 +1,15 @@
 package com.example.onlybuns.controller;
 
-import com.example.onlybuns.model.Location;
-import com.example.onlybuns.model.Post;
-import com.example.onlybuns.model.UserInfo;
+import com.example.onlybuns.model.*;
+import com.example.onlybuns.service.CommentService;
+import com.example.onlybuns.service.LikeService;
 import com.example.onlybuns.service.PostService;
 
 import java.io.File;
 import java.io.IOException;
 import java.time.ZonedDateTime;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 import com.example.onlybuns.service.UserInfoService;
@@ -16,6 +17,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -25,14 +27,27 @@ import org.springframework.web.multipart.MultipartFile;
 public class PostController {
     private final PostService postService;
     private final UserInfoService userInfoService;
+    private final CommentService commentService;
+    private final LikeService likeService;
 
     @Autowired
-    public PostController(PostService postService, UserInfoService userInfoService) {
+    public PostController(PostService postService, UserInfoService userInfoService, CommentService commentService, LikeService likeService) {
         this.postService = postService;
         this.userInfoService = userInfoService;
+        this.commentService = commentService;
+        this.likeService = likeService;
+    }
+    @GetMapping("/{id}")
+    public ResponseEntity<Post> getPostById(@PathVariable Long id) {
+        Post post = postService.getPostById(id);
+        if (post == null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
+        }
+        return ResponseEntity.ok(post);
     }
 
-     // GET endpoint to fetch all posts
+
+    // GET endpoint to fetch all posts
     @GetMapping(produces = "application/json")
     public List<Post> getAllPosts() {
         return postService.getAllPosts();
@@ -86,5 +101,60 @@ public class PostController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
         }
     }
+    // Add a comment to a post
+    @PostMapping("/{postId}/comment")
+    public ResponseEntity<Comment> addComment(@PathVariable Long postId,
+                                              @RequestBody Comment commentRequest) {
+        Post post = postService.getPostById(postId);
+        UserInfo user = userInfoService.getUserById(commentRequest.getUser().getId());
+
+        if (post == null || user == null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
+        }
+
+        Comment comment = new Comment();
+        comment.setPost(post);
+        comment.setUser(user);
+        comment.setText(commentRequest.getText());
+        comment.setCreationDate(ZonedDateTime.now()); // Set current time as comment creation time
+
+        Comment savedComment = commentService.createComment(comment); // Save comment to the database
+        post.getComments().add(savedComment); // Add to the post's comments list
+
+        return ResponseEntity.ok(savedComment); // Return the added comment
     }
+    // Add a like to a
+
+    @PostMapping("/{postId}/like")
+    public ResponseEntity<Post> likePost(@PathVariable Long postId, @RequestBody Map<String, Long> requestBody) {
+        Long userId = requestBody.get("userId");  // Extract userId from the request body
+
+        Post post = postService.getPostById(postId);
+        UserInfo user = userInfoService.getUserById(userId);
+
+        if (post == null || user == null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
+        }
+
+        // Check if the user has already liked the post
+        Like existingLike = likeService.getLikeByPostAndUser(postId, userId);
+        if (existingLike != null) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(post); // User has already liked the post
+        }
+
+        // Create a new like
+        Like like = new Like();
+        like.setPost(post);
+        like.setUser(user);
+
+        likeService.createLike(like); // Create like in the database
+
+        post.incrementLikeCount(); // Increment the like count for the post
+        postService.save(post); // Save updated post with new like count
+
+        return ResponseEntity.ok(post); // Return updated post with likes
+    }
+
+
+}
 
