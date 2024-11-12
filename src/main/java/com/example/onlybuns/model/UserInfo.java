@@ -31,9 +31,6 @@ public class UserInfo {
     private List<Comment> comments = new ArrayList<>();
 
     @OneToMany(mappedBy = "user")
-    private List<Post> posts = new ArrayList<>();
-
-    @OneToMany(mappedBy = "user")
     private List<Like> likes = new ArrayList<>();
 
 }
