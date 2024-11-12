@@ -1,5 +1,6 @@
 package com.example.onlybuns.service;
 
+import com.example.onlybuns.model.Post;
 import com.example.onlybuns.model.UserInfo;
 import com.example.onlybuns.repository.UserInfoRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -14,6 +15,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.UUID;
+import java.util.List;
 import java.util.Optional;
 
 @Service
@@ -43,8 +45,18 @@ public class UserInfoService implements UserDetailsService {
         return new UserInfoDetails(user);
     }
 
-
     public String addUser(UserInfo userInfo) {
+        UserInfo user = getUserByEmail(userInfo.getEmail());
+        if(user != null){
+            return "User with that email already exists!";
+        }
+
+        UserInfo u = getUserByUsername(userInfo.getUsername());
+        if(u != null){
+            return "User with that username already exists!";
+        }
+        
+
         // Encode password
         userInfo.setPassword(encoder.encode(userInfo.getPassword()));
 
@@ -84,6 +96,10 @@ public class UserInfoService implements UserDetailsService {
 
     public UserInfo getUserByEmail(String email) {
         return repository.findByEmail(email).orElse(null);
+    }
+
+    public UserInfo getUserByUsername(String username){
+        return repository.findByUsername(username).orElse(null);
     }
 
     public UserInfo getUserById(Long userId) {
