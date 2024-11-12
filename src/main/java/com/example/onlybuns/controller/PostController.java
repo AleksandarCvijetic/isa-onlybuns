@@ -62,6 +62,9 @@ public class PostController {
             @RequestParam("userId") Long userId) {
 
         try {
+            if (image == null || image.isEmpty()) {
+                return ResponseEntity.badRequest().body(null); 
+            }
             String uploadDir = System.getProperty("user.dir") + File.separator + "uploads";
 
             File directory = new File(uploadDir);

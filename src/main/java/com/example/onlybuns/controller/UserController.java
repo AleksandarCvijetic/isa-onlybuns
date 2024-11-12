@@ -30,6 +30,11 @@ public class UserController {
         return "Welcome this endpoint is not secure";
     }
 
+    @GetMapping("/getByUsername")
+    public UserInfo getUserByUsername(@RequestBody UserInfo userInfo){
+        return service.getUserByUsername(userInfo.getUsername());
+    }
+
     @PostMapping("/addNewUser")
     public String addNewUser(@RequestBody UserInfo userInfo) {
         return service.addUser(userInfo);
