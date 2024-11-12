@@ -47,10 +47,8 @@ public class PostController {
             @RequestParam("userId") Long userId) {
 
         try {
-            // Save the image to the filesystem (e.g., in an "uploads" directory)
             String uploadDir = System.getProperty("user.dir") + File.separator + "uploads";
 
-            // Ensure the upload directory exists
             File directory = new File(uploadDir);
             if (!directory.exists()) {
                 boolean dirCreated = directory.mkdirs();
@@ -59,27 +57,26 @@ public class PostController {
                 }
             }
 
-            // Generate a unique file path and save the image file
             String originalFilename = image.getOriginalFilename();
             String filePath = uploadDir + File.separator + UUID.randomUUID() + "_" + originalFilename;
             File dest = new File(filePath);
             image.transferTo(dest);
-            // Create a new Post object
+
             Post post = new Post();
             post.setDescription(description);
-            post.setImage(filePath); // Store the path to the saved image
+            post.setImage(filePath);
             post.setCreatedAt(ZonedDateTime.parse(createdAt));
 
-            // Set the user (assuming you have a UserInfoService to fetch the user)
+
             UserInfo user = userInfoService.getUserById(userId);
             post.setUser(user);
 
-            // Parse and set the location (assuming the location is sent as JSON and parsed here)
+
             ObjectMapper objectMapper = new ObjectMapper();
             Location location = objectMapper.readValue(locationString, Location.class);
             post.setLocation(location);
 
-            // Save the post using the service
+
             Post savedPost = postService.createPost(post);
 
             return ResponseEntity.ok(savedPost);
