@@ -1,9 +1,7 @@
 package com.example.onlybuns.controller;
 
 import com.example.onlybuns.model.*;
-import com.example.onlybuns.service.CommentService;
-import com.example.onlybuns.service.LikeService;
-import com.example.onlybuns.service.PostService;
+import com.example.onlybuns.service.*;
 
 import java.io.File;
 import java.io.IOException;
@@ -12,12 +10,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
-import com.example.onlybuns.service.UserInfoService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -166,6 +165,71 @@ public class PostController {
 
         return ResponseEntity.ok(post); // Return updated post with likes
     }
+    @PutMapping("/{id}")
+    public ResponseEntity<Post> updatePost(@PathVariable Long id,
+                                           @RequestBody Map<String, Object> requestBody) {
+        // Get the existing post
+        Post existingPost = postService.getPostById(id);
+
+        if (existingPost == null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
+        }
+
+        // Extract userId from request body
+        if (!requestBody.containsKey("userId")) {
+            return ResponseEntity.badRequest().body(null);
+        }
+        Long currentUserId = ((Number) requestBody.get("userId")).longValue();
+
+        // Verify user ownership
+        if (!existingPost.getUser().getId().equals(currentUserId)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(null);
+        }
+
+        // Update fields
+        String description = (String) requestBody.get("description");
+        if (description != null) {
+            existingPost.setDescription(description);
+        }
+
+        String image = (String) requestBody.get("image");
+        if (image != null && !image.isEmpty()) {
+            existingPost.setImage(image);
+        }
+
+        // If needed, you can handle other fields similarly
+        // For example:
+        // Map<String, Object> locationMap = (Map<String, Object>) requestBody.get("location");
+        // ... Convert to Location object and set it if desired.
+
+        // Save updated post
+        Post savedPost = postService.save(existingPost);
+        return ResponseEntity.ok(savedPost);
+    }
+
+
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deletePost(@PathVariable Long id, @AuthenticationPrincipal UserDetails userDetails) {
+        // Get the existing post
+        Post existingPost = postService.getPostById(id);
+
+        Long currentUserId = ((UserInfoDetails) userDetails).getId();
+
+        if (existingPost == null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+        }
+
+        // Check ownership
+        if (!existingPost.getUser().getId().equals(currentUserId)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
+
+        // Delete post
+        postService.deletePost(id);
+        return ResponseEntity.noContent().build();
+    }
+
 
 
 }

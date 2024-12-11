@@ -14,6 +14,7 @@ import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.transaction.annotation.Transactional;
 
+
 import java.util.UUID;
 import java.util.List;
 import java.util.Optional;
@@ -105,5 +106,10 @@ public class UserInfoService implements UserDetailsService {
     public UserInfo getUserById(Long userId) {
         return repository.findById(userId).orElse(null);
     }
+
+
+
+
+
 }
 
