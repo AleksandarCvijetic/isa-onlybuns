@@ -6,6 +6,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.Formula;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -29,6 +30,13 @@ public class UserInfo {
 
     @Formula("(select count(p.id) from post p where p.user_id = id)")
     private Long postCount;
+
+    private LocalDateTime registrationDate;
+
+    @PrePersist
+    protected void onCreate() {
+        registrationDate = LocalDateTime.now();
+    }
 
 
 //    @OneToMany(mappedBy = "user")
