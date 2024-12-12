@@ -1,20 +1,27 @@
 package com.example.onlybuns.controller;
 
+import com.example.onlybuns.dtos.UserInfoDTO;
 import com.example.onlybuns.model.AuthRequest;
 import com.example.onlybuns.model.UserInfo;
 import com.example.onlybuns.service.JwtService;
 import com.example.onlybuns.service.UserInfoService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.web.bind.annotation.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+
 
 @RestController
 @RequestMapping("/auth")
 public class UserController {
+    private static final Logger logger = LoggerFactory.getLogger(UserController.class);
 
     @Autowired
     private UserInfoService service;
@@ -69,5 +76,24 @@ public class UserController {
             throw new UsernameNotFoundException("Invalid user request!");
         }
     }
+    @GetMapping("/admin/users")
+    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
+    public Page<UserInfoDTO> getAllUsers(
+            @RequestParam(value = "name", required = false) String name,
+            @RequestParam(value = "email", required = false) String email,
+            @RequestParam(value = "minPosts", required = false) Integer minPosts,
+            @RequestParam(value = "maxPosts", required = false) Integer maxPosts,
+            @RequestParam(value = "sortBy", defaultValue = "id") String sortBy,
+            @RequestParam(value = "sortOrder", defaultValue = "asc") String sortOrder,
+            @RequestParam(value = "page", defaultValue = "0") int page,
+            @RequestParam(value = "size", defaultValue = "5") int size
+    ) {
+        logger.info("Sort by: {}, Sort order: {}", sortBy, sortOrder);
+
+        return service.getFilteredUsers(name, email, minPosts, maxPosts, sortBy, sortOrder, page, size);
+    }
+
+
+
 }
 

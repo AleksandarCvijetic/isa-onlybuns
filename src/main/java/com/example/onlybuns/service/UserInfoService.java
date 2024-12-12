@@ -1,9 +1,17 @@
 package com.example.onlybuns.service;
 
+import com.example.onlybuns.dtos.UserInfoDTO;
 import com.example.onlybuns.model.Post;
 import com.example.onlybuns.model.UserInfo;
+import com.example.onlybuns.repository.PostRepository;
 import com.example.onlybuns.repository.UserInfoRepository;
+import jakarta.persistence.criteria.Predicate;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -15,6 +23,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.transaction.annotation.Transactional;
 
 
+import java.util.ArrayList;
 import java.util.UUID;
 import java.util.List;
 import java.util.Optional;
@@ -24,6 +33,9 @@ public class UserInfoService implements UserDetailsService {
 
     @Autowired
     private UserInfoRepository repository;
+
+    @Autowired
+    private PostRepository postRepository;
 
     @Autowired
     private PasswordEncoder encoder;
@@ -106,10 +118,51 @@ public class UserInfoService implements UserDetailsService {
     public UserInfo getUserById(Long userId) {
         return repository.findById(userId).orElse(null);
     }
+    public Page<UserInfoDTO> getFilteredUsers(
+            String name,
+            String email,
+            Integer minPosts,
+            Integer maxPosts,
+            String sortBy,
+            String sortOrder,
+            int page,
+            int size) {
 
+        // Determine Sort property
+        String sortProperty = sortBy.equalsIgnoreCase("posts") ? "postCount" : sortBy;
 
+        // Create Sort object
+        Sort sort = Sort.by(Sort.Direction.fromString(sortOrder), sortProperty);
+        Pageable pageable = PageRequest.of(page, size, sort);
 
+        // Create Specification
+        Specification<UserInfo> specification = (root, query, criteriaBuilder) -> {
+            List<Predicate> predicates = new ArrayList<>();
 
+            if (name != null && !name.isEmpty()) {
+                predicates.add(criteriaBuilder.like(criteriaBuilder.lower(root.get("name")), "%" + name.toLowerCase() + "%"));
+            }
 
+            if (email != null && !email.isEmpty()) {
+                predicates.add(criteriaBuilder.like(criteriaBuilder.lower(root.get("email")), "%" + email.toLowerCase() + "%"));
+            }
+
+            if (minPosts != null) {
+                predicates.add(criteriaBuilder.greaterThanOrEqualTo(root.get("postCount"), minPosts));
+            }
+
+            if (maxPosts != null) {
+                predicates.add(criteriaBuilder.lessThanOrEqualTo(root.get("postCount"), maxPosts));
+            }
+
+            return criteriaBuilder.and(predicates.toArray(new Predicate[0]));
+        };
+
+        // Fetch data
+        Page<UserInfo> usersPage = repository.findAll(specification, pageable);
+
+        // Map to DTO
+        return usersPage.map(UserInfoDTO::new);
+    }
 }
 
