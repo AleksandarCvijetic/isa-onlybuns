@@ -11,6 +11,13 @@ import java.time.ZonedDateTime;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
+@Table(
+        name = "followers",
+        uniqueConstraints = @UniqueConstraint(
+                name = "uk_followers_follower_followee",
+                columnNames = {"follower_id", "followee_id"}
+        )
+)
 public class Followers {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

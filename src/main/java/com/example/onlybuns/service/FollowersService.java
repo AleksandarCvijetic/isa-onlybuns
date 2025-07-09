@@ -3,6 +3,7 @@ package com.example.onlybuns.service;
 import com.example.onlybuns.model.Followers;
 import com.example.onlybuns.model.UserInfo;
 import com.example.onlybuns.repository.FollowersRepository;
+import jakarta.transaction.Transactional;
 import org.apache.catalina.User;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -19,10 +20,15 @@ public class FollowersService {
     @Autowired
     private UserInfoService userInfoService;
 
+    @Transactional
     public void followUser(long followerId, long followeeId) {
         if(followersRepository.existsByFollower_IdAndFollowee_Id(followerId, followeeId)) {
             throw new RuntimeException("Already following this user.");
         }
+        if (followerId == followeeId) {
+            throw new IllegalArgumentException("A user cannot follow themselves.");
+        }
+
         UserInfo follower = userInfoService.getUserById(followerId);
         UserInfo followee = userInfoService.getUserById(followeeId);
 
@@ -33,6 +39,7 @@ public class FollowersService {
 
         followersRepository.save(follow);
     }
+    @Transactional
     public void unfollowUser(Long followerId, Long followeeId) {
         Followers follow = followersRepository.findByFollower_IdAndFollowee_Id(followerId, followeeId)
                 .orElseThrow(() -> new RuntimeException("Follow relationship not found."));
