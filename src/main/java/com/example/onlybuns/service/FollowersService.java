@@ -3,6 +3,7 @@ package com.example.onlybuns.service;
 import com.example.onlybuns.model.Followers;
 import com.example.onlybuns.model.UserInfo;
 import com.example.onlybuns.repository.FollowersRepository;
+import io.github.resilience4j.ratelimiter.annotation.RateLimiter;
 import jakarta.persistence.OptimisticLockException;
 import jakarta.transaction.Transactional;
 import org.apache.catalina.User;
@@ -30,6 +31,7 @@ public class FollowersService {
             backoff = @Backoff(delay = 100)
     )
     @Transactional
+    @RateLimiter(name = "followUser")
     public void followUser(long followerId, long followeeId) {
         if(followersRepository.existsByFollower_IdAndFollowee_Id(followerId, followeeId)) {
             throw new RuntimeException("Already following this user.");
