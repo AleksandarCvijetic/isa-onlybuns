@@ -27,6 +27,9 @@ public class UserInfo {
     private String roles;
     private String activationToken;
     private boolean isActive = false;
+    //@Version
+    //private Long version;
+
 
     @Formula("(select count(p.id) from post p where p.user_id = id)")
     private Long postCount;

@@ -3,9 +3,13 @@ package com.example.onlybuns.service;
 import com.example.onlybuns.model.Followers;
 import com.example.onlybuns.model.UserInfo;
 import com.example.onlybuns.repository.FollowersRepository;
+import jakarta.persistence.OptimisticLockException;
 import jakarta.transaction.Transactional;
 import org.apache.catalina.User;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.retry.annotation.Backoff;
+import org.springframework.retry.annotation.Recover;
+import org.springframework.retry.annotation.Retryable;
 import org.springframework.stereotype.Service;
 
 import java.time.ZonedDateTime;
@@ -20,6 +24,11 @@ public class FollowersService {
     @Autowired
     private UserInfoService userInfoService;
 
+    @Retryable(
+            value = OptimisticLockException.class,
+            maxAttempts = 3,
+            backoff = @Backoff(delay = 100)
+    )
     @Transactional
     public void followUser(long followerId, long followeeId) {
         if(followersRepository.existsByFollower_IdAndFollowee_Id(followerId, followeeId)) {
@@ -54,6 +63,11 @@ public class FollowersService {
         return followersRepository.findByFollower_Id(userId).stream()
                 .map(Followers::getFollowee)
                 .collect(Collectors.toList());
+    }
+    @Recover
+    public void recover(OptimisticLockException e, Long followerId, Long followeeId) {
+        // fallback posle iscrpljenih retry-ja
+        throw new RuntimeException("You can not follow now. Try again later!.", e);
     }
 
 }
