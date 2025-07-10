@@ -1,9 +1,20 @@
 package com.example.onlybuns.service;
 
+import com.example.onlybuns.dtos.UserInfoDTO;
 import com.example.onlybuns.model.Post;
 import com.example.onlybuns.model.UserInfo;
+import com.example.onlybuns.repository.FollowersRepository;
+import com.example.onlybuns.repository.LikeRepository;
+import com.example.onlybuns.repository.PostRepository;
 import com.example.onlybuns.repository.UserInfoRepository;
+import jakarta.persistence.criteria.Predicate;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -13,16 +24,25 @@ import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.transaction.annotation.Transactional;
+import java.time.ZoneId;
 
+import java.time.LocalDateTime;
+import java.time.ZonedDateTime;
+import java.util.ArrayList;
 import java.util.UUID;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
+@Transactional
 public class UserInfoService implements UserDetailsService {
 
     @Autowired
     private UserInfoRepository repository;
+
+    @Autowired
+    private PostRepository postRepository;
 
     @Autowired
     private PasswordEncoder encoder;
@@ -32,6 +52,11 @@ public class UserInfoService implements UserDetailsService {
 
     @Value("${spring.mail.username}")
     private String fromEmail;
+
+    @Autowired
+    private FollowersRepository followersRepository;
+    @Autowired
+    private LikeRepository likeRepository;
 
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
@@ -104,6 +129,111 @@ public class UserInfoService implements UserDetailsService {
 
     public UserInfo getUserById(Long userId) {
         return repository.findById(userId).orElse(null);
+    }
+    public Page<UserInfoDTO> getFilteredUsers(
+            String name,
+            String email,
+            Integer minPosts,
+            Integer maxPosts,
+            String sortBy,
+            String sortOrder,
+            int page,
+            int size) {
+
+        // Determine Sort property
+        String sortProperty = sortBy.equalsIgnoreCase("posts") ? "postCount" : sortBy;
+
+        // Create Sort object
+        Sort sort = Sort.by(Sort.Direction.fromString(sortOrder), sortProperty);
+        Pageable pageable = PageRequest.of(page, size, sort);
+
+        // Create Specification
+        Specification<UserInfo> specification = (root, query, criteriaBuilder) -> {
+            List<Predicate> predicates = new ArrayList<>();
+
+            if (name != null && !name.isEmpty()) {
+                predicates.add(criteriaBuilder.like(criteriaBuilder.lower(root.get("name")), "%" + name.toLowerCase() + "%"));
+            }
+
+            if (email != null && !email.isEmpty()) {
+                predicates.add(criteriaBuilder.like(criteriaBuilder.lower(root.get("email")), "%" + email.toLowerCase() + "%"));
+            }
+
+            if (minPosts != null) {
+                predicates.add(criteriaBuilder.greaterThanOrEqualTo(root.get("postCount"), minPosts));
+            }
+
+            if (maxPosts != null) {
+                predicates.add(criteriaBuilder.lessThanOrEqualTo(root.get("postCount"), maxPosts));
+            }
+
+            return criteriaBuilder.and(predicates.toArray(new Predicate[0]));
+        };
+
+        // Fetch data
+        Page<UserInfo> usersPage = repository.findAll(specification, pageable);
+
+        // Map to DTO
+        return usersPage.map(UserInfoDTO::new);
+    }
+
+    public void updateLastLogin(UserInfo userInfo) {
+        LocalDateTime now = LocalDateTime.now();
+        repository.updateLastLoginByUserId(now, userInfo.getId());
+
+    }
+
+    @Scheduled(cron = "10 51 9 * * ?")
+    public void checkInactiveUsersAndNotify() {
+        LocalDateTime sevenDaysAgo = LocalDateTime.now().minusDays(7);
+
+        List<UserInfo> inactiveUsers = repository
+                .findByLastLoginBeforeAndIsNotifiedFalse(sevenDaysAgo);
+
+        inactiveUsers.forEach(user -> {
+            //UserStatistics stats = statisticsService.getUserStatistics(user.getId());
+            sendNotificationEmail(user);
+            repository.markAsNotified(user.getId());
+        });
+    }
+
+    private void sendNotificationEmail(UserInfo user) {
+        SimpleMailMessage message = new SimpleMailMessage();
+        message.setTo(user.getEmail());
+        message.setSubject("We haven't seen each other 7 days!");
+        message.setText(generateEmailContent(user));
+
+        mailSender.send(message);
+    }
+
+    private String generateEmailContent(UserInfo user) {
+        return String.format(
+                "Dear %s,\n\nYou haven't logged in in previous 7 days.\n\n" +
+                        "Here are some new statistics:\n" +
+                        "- New followers: %d\n" +
+                        "- New likes: %d\n" +
+                        //"- Nove objave koje ste propustili: %d\n\n" +
+                        "Come back and check out what's new!\n\n" +
+                        "We wish you all the best,\nYour team!",
+                user.getUsername(),
+                calculateNewFollowers(user.getId(), user.getLastLogin()),
+                calculateNewLikes(user.getId(), user.getLastLogin())
+                //stats.getNewPosts()
+        );
+    }
+
+    private Long calculateNewFollowers(Long userId, LocalDateTime lastLogin) {
+        ZonedDateTime zonedLastLogin = lastLogin.atZone(ZoneId.systemDefault());
+        return followersRepository.countNewFollowersForUserSinceLastLogin(userId, zonedLastLogin);
+    }
+
+    private Long calculateNewLikes(Long userId, LocalDateTime lastLogin){
+        List<Post> userPosts = postRepository.findByUserId(userId);
+        List<Long> postIds = userPosts.stream()
+                .map(Post::getId)
+                .collect(Collectors.toList());
+        return likeRepository.countTotalNewLikesForPostsSinceLastLogin(postIds, lastLogin);
+
     }
 }
 

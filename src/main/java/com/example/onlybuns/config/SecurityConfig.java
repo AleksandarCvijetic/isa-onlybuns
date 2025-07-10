@@ -5,6 +5,7 @@ import com.example.onlybuns.service.UserInfoService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
@@ -39,7 +40,11 @@ public class SecurityConfig {
         http
             .csrf(csrf -> csrf.disable()) // Disable CSRF for stateless APIs
             .authorizeHttpRequests(auth -> auth
-                .requestMatchers("/auth/welcome", "/auth/getByUsername","/auth/addNewUser","/auth/activate", "/auth/generateToken", "/post").permitAll()
+                .requestMatchers("/auth/welcome", "/auth/getByUsername",
+                "/post/{postId}/like", "/post/{postId}/comment","/auth/addNewUser",
+                "/auth/activate", "/auth/generateToken", "/post", "/post/*",
+                "/images/{filename:.+}","/followers/**").permitAll()
+                    .requestMatchers(HttpMethod.DELETE, "/post/*").authenticated()
                 .requestMatchers("/auth/user/**").hasAuthority("ROLE_USER")
                 .requestMatchers("/auth/admin/**").hasAuthority("ROLE_ADMIN")
                 .anyRequest().authenticated() // Protect all other endpoints

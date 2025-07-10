@@ -4,7 +4,9 @@ import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.Formula;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -25,15 +27,30 @@ public class UserInfo {
     private String roles;
     private String activationToken;
     private boolean isActive = false;
+    private LocalDateTime lastLogin;
+    @Column(name = "is_notified")
+    private boolean isNotified = false;
+    //@Version
+    //private Long version;
 
 
-    //@OneToMany(mappedBy = "user")
-    //private List<Comment> comments = new ArrayList<>();
+    @Formula("(select count(p.id) from post p where p.user_id = id)")
+    private Long postCount;
 
-    //@OneToMany(mappedBy = "user")
-    //private List<Post> posts = new ArrayList<>();
+    private LocalDateTime registrationDate;
 
-    //@OneToMany(mappedBy = "user")
-    //private List<Like> likes = new ArrayList<>();
+    @PrePersist
+    protected void onCreate() {
+        registrationDate = LocalDateTime.now();
+    }
 
+
+//    @OneToMany(mappedBy = "user")
+//    private List<Comment> comments = new ArrayList<>();
+
+//    @OneToMany(mappedBy = "user")
+//    private List<Post> posts = new ArrayList<>();
+
+//    @OneToMany(mappedBy = "user")
+//    private List<Like> likes = new ArrayList<>();
 }

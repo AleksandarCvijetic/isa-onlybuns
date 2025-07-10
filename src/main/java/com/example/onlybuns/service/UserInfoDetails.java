@@ -11,12 +11,14 @@ import java.util.stream.Collectors;
 
 public class UserInfoDetails implements UserDetails {
 
+    private Long id;
     private String username; // Changed from 'name' to 'username' for clarity
     private String password;
     private List<GrantedAuthority> authorities;
 
     public UserInfoDetails(UserInfo userInfo) {
-        this.username = userInfo.getName(); // Assuming 'name' is used as 'username'
+        this.id = userInfo.getId();
+        this.username = userInfo.getEmail(); // Assuming 'name' is used as 'username' // ovo sam promenio u getEmail jer jwtauthfilter trazi po mailu ne po username ili name
         this.password = userInfo.getPassword();
         this.authorities = List.of(userInfo.getRoles().split(","))
                 .stream()
@@ -38,6 +40,8 @@ public class UserInfoDetails implements UserDetails {
     public String getUsername() {
         return username;
     }
+
+    public Long getId() {return id;}
 
     @Override
     public boolean isAccountNonExpired() {
