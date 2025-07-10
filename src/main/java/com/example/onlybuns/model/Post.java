@@ -32,6 +32,9 @@ public class Post {
     @Embedded
     private Location location;
 
+    @OneToMany(mappedBy = "post", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Like> likes = new ArrayList<>();
+
     public void incrementLikeCount() {
         this.likeCount++;
     }

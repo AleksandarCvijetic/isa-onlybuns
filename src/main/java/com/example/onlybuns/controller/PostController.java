@@ -158,10 +158,10 @@ public class PostController {
         like.setPost(post);
         like.setUser(user);
 
-        likeService.createLike(like); // Create like in the database
+        likeService.createLike(user, post.getId()); // Create like in the database
 
-        post.incrementLikeCount(); // Increment the like count for the post
-        postService.save(post); // Save updated post with new like count
+        //post.incrementLikeCount(); // Increment the like count for the post
+        //postService.save(post); // Save updated post with new like count
 
         return ResponseEntity.ok(post); // Return updated post with likes
     }

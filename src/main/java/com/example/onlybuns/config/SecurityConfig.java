@@ -30,6 +30,14 @@ public class SecurityConfig {
     @Autowired
     private JwtAuthFilter authFilter;
 
+    private final UserDetailsService userDetailsService;
+    private final PasswordEncoder passwordEncoder;
+
+    public SecurityConfig(UserDetailsService userDetailsService, PasswordEncoder passwordEncoder) {
+        this.userDetailsService = userDetailsService;
+        this.passwordEncoder = passwordEncoder;
+    }
+
     @Bean
     public UserDetailsService userDetailsService() {
         return new UserInfoService(); // Ensure UserInfoService implements UserDetailsService
@@ -54,21 +62,17 @@ public class SecurityConfig {
             )
             .authenticationProvider(authenticationProvider()) // Custom authentication provider
             .addFilterBefore(authFilter, UsernamePasswordAuthenticationFilter.class) // Add JWT filter
-            .cors();
+            ;
 
         return http.build();
     }
 
-    @Bean
-    public PasswordEncoder passwordEncoder() {
-        return new BCryptPasswordEncoder(); // Password encoding
-    }
 
     @Bean
     public AuthenticationProvider authenticationProvider() {
         DaoAuthenticationProvider authenticationProvider = new DaoAuthenticationProvider();
-        authenticationProvider.setUserDetailsService(userDetailsService());
-        authenticationProvider.setPasswordEncoder(passwordEncoder());
+        authenticationProvider.setUserDetailsService(userDetailsService);
+        authenticationProvider.setPasswordEncoder(passwordEncoder);
         return authenticationProvider;
     }
 
