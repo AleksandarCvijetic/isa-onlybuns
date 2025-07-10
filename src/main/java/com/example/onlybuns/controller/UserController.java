@@ -71,6 +71,7 @@ public class UserController {
         );
         if (authentication.isAuthenticated()) {
             UserInfo userInfo = service.getUserByEmail(authRequest.getEmail());
+            service.updateLastLogin(userInfo);
             return jwtService.generateToken(authRequest.getEmail(), userInfo.getRoles(), userInfo.getId());
         } else {
             throw new UsernameNotFoundException("Invalid user request!");

@@ -27,6 +27,9 @@ public class UserInfo {
     private String roles;
     private String activationToken;
     private boolean isActive = false;
+    private LocalDateTime lastLogin;
+    @Column(name = "is_notified")
+    private boolean isNotified = false;
     //@Version
     //private Long version;
 

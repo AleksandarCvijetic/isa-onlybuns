@@ -5,6 +5,8 @@ import com.example.onlybuns.repository.LikeRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
+
 @Service
 public class LikeService {
 
@@ -16,6 +18,9 @@ public class LikeService {
     }
 
     public Like createLike(Like like) {
+
+        like.setLikeDate(LocalDateTime.now());
+
         return likeRepository.save(like); // Save the like record in the database
     }
 
