@@ -43,7 +43,7 @@ public class SecurityConfig {
                 .requestMatchers("/auth/welcome", "/auth/getByUsername",
                 "/post/{postId}/like", "/post/{postId}/comment","/auth/addNewUser",
                 "/auth/activate", "/auth/generateToken", "/post", "/post/*",
-                "/images/{filename:.+}","/followers/**","/api/data", "api/slow").permitAll()
+                "/images/{filename:.+}","/followers/**","/api/data", "api/slow", "/actuator/health").permitAll()
                     .requestMatchers(HttpMethod.DELETE, "/post/*").authenticated()
                 .requestMatchers("/auth/user/**").hasAuthority("ROLE_USER")
                 .requestMatchers("/auth/admin/**","/admin/analytics/**").hasAuthority("ROLE_ADMIN")
