@@ -41,29 +41,41 @@ public class ProxyController {
             )
     )
     @RequestMapping("/**")
-    public ResponseEntity<byte[]> forward(HttpMethod method, HttpServletRequest request,
-                                          @RequestBody(required = false) byte[] body) throws IOException {
-        String target = balancer.chooseInstance();
-        String uri    = request.getRequestURI() +
-                (request.getQueryString() != null ? "?" + request.getQueryString() : "");
-        balancer.increment(target);
-        try{
-            log.info("Forwarding {} {} → {}", method, uri, target);
-            String url = target +
-                    request.getRequestURI() +
-                    (request.getQueryString() != null ? "?" + request.getQueryString() : "");
-            HttpHeaders headers = new HttpHeaders();
-            Collections.list(request.getHeaderNames())
-                    .forEach(name -> headers.put(name,Collections.list(request.getHeaders(name))));
-            HttpEntity<byte[]> entity = new HttpEntity<>(body, headers);
-            return restTemplate.exchange(url, method, entity, byte[].class);
-        } catch (RestClientException e) {
-            throw e;
-        }finally{
-            balancer.decrement(target);
-        }
+    public ResponseEntity<byte[]> forward(HttpMethod method,
+                                          HttpServletRequest request,
+                                          @RequestBody(required = false) byte[] body) {
+        for (String target : balancer.getAvailableInstances()) {
+            balancer.increment(target);
+            try {
+                String uri = request.getRequestURI() +
+                        (request.getQueryString() != null ? "?" + request.getQueryString() : "");
+                log.info("Forwarding {} {} → {}", method, uri, target);
+                HttpHeaders headers = new HttpHeaders();
+                Collections.list(request.getHeaderNames())
+                        .forEach(name -> headers.put(name, Collections.list(request.getHeaders(name))));
+                HttpEntity<byte[]> entity = new HttpEntity<>(body, headers);
 
+                ResponseEntity<byte[]> response = restTemplate.exchange(
+                        target + uri, method, entity, byte[].class);
+                return response;
+            } catch (RestClientException e) {
+                log.warn("Instance {} failed: {}", target, e.getMessage());
+                balancer.decrement(target);
+                // mark instance unhealthy so chooseInstance won't pick it again
+                balancer.markUnhealthy(target);
+                // try next instance in the loop
+            } finally {
+                // already decremented on failure, but leave here for clarity
+                if (balancer.isHealthy(target)) {
+                    balancer.decrement(target);
+                }
+            }
+        }
+        // if we get here, no healthy instances left
+        return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
+                .body(("Load-balancer: all instances are down").getBytes());
     }
+
     @Recover
     public ResponseEntity<String> fallback(ExhaustedRetryException ex) {
         log.error("Retries exhausted for request", ex);
