@@ -1,5 +1,6 @@
 package com.example.onlybuns.controller;
 
+import com.example.onlybuns.dtos.PostReadDto;
 import com.example.onlybuns.model.*;
 import com.example.onlybuns.service.*;
 
@@ -230,7 +231,10 @@ public class PostController {
         return ResponseEntity.noContent().build();
     }
 
-
+    @GetMapping("/followedUserPosts/{userId}")
+    public List<PostReadDto> getAllPosts(@PathVariable Long userId) {
+        return postService.getFollowedUserPosts(userId);
+    }
 
 }
 

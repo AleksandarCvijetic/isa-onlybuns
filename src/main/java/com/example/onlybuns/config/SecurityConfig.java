@@ -9,6 +9,7 @@ import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
+import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
@@ -46,15 +47,17 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
+                .cors(Customizer.withDefaults())
             .csrf(csrf -> csrf.disable()) // Disable CSRF for stateless APIs
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers("/auth/welcome", "/auth/getByUsername",
                 "/post/{postId}/like", "/post/{postId}/comment","/auth/addNewUser",
                 "/auth/activate", "/auth/generateToken", "/post", "/post/*",
-                "/images/{filename:.+}","/followers/**").permitAll()
+                "/images/**","/followers/**", "/comments", "/comments/{$postId}").permitAll()
                     .requestMatchers(HttpMethod.DELETE, "/post/*").authenticated()
                 .requestMatchers("/auth/user/**").hasAuthority("ROLE_USER")
-                .requestMatchers("/auth/admin/**").hasAuthority("ROLE_ADMIN")
+                    .requestMatchers("/post/followedUserPosts/**").hasAuthority("ROLE_USER")
+                    .requestMatchers("/auth/admin/**").hasAuthority("ROLE_ADMIN")
                 .anyRequest().authenticated() // Protect all other endpoints
             )
             .sessionManagement(sess -> sess
