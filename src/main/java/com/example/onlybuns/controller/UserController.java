@@ -1,6 +1,7 @@
 package com.example.onlybuns.controller;
 
 import com.example.onlybuns.dtos.UserInfoDTO;
+import com.example.onlybuns.dtos.ChangePasswordDto;
 import com.example.onlybuns.model.AuthRequest;
 import com.example.onlybuns.model.UserInfo;
 import com.example.onlybuns.service.JwtService;
@@ -37,10 +38,29 @@ public class UserController {
         return "Welcome this endpoint is not secure";
     }
 
-    @GetMapping("/getByUsername")
-    public UserInfo getUserByUsername(@RequestBody UserInfo userInfo){
-        return service.getUserByUsername(userInfo.getUsername());
+    @GetMapping("/users/{username}")
+    public UserInfoDTO getUserByUsername(@PathVariable String username) {
+        UserInfo user = service.getUserByUsername(username);
+        if (user == null) {
+            throw new UsernameNotFoundException("User not found: " + username);
+        }
+        return new UserInfoDTO(user);
     }
+
+    @GetMapping("/userId/{id}")
+    public UserInfoDTO getUserByUserId(@PathVariable Long id) {
+        UserInfo user = service.getUserById(id);
+        if (user == null) {
+            throw new UsernameNotFoundException("User not found: " + id);
+        }
+        return new UserInfoDTO(user);
+    }
+
+    @PostMapping("/change-password")
+    public String changePassword(@RequestBody ChangePasswordDto dto) {
+        return service.changePassword(dto.getUserId(), dto.getOldPassword(), dto.getNewPassword());
+    }
+
 
     @PostMapping("/addNewUser")
     public String addNewUser(@RequestBody UserInfo userInfo) {

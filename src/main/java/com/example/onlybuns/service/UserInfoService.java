@@ -58,6 +58,24 @@ public class UserInfoService implements UserDetailsService {
         return new UserInfoDetails(user);
     }
 
+    public String changePassword(Long userId, String oldPassword, String newPassword) {
+        UserInfo user = getUserById(userId);
+        if (user == null) {
+            return "Korisnik ne postoji.";
+        }
+
+        // Provera da li je stara lozinka tačna
+        if (!encoder.matches(oldPassword, user.getPassword())) {
+            return "Old password incorrect!";
+        }
+
+        // Postavi novu lozinku
+        user.setPassword(encoder.encode(newPassword));
+        repository.save(user);
+
+        return "Lozinka je uspešno promenjena.";
+    }
+
     public String addUser(UserInfo userInfo) {
         UserInfo user = getUserByEmail(userInfo.getEmail());
         if(user != null){
