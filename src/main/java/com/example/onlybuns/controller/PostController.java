@@ -52,6 +52,11 @@ public class PostController {
         return postService.getAllPosts();
     }
 
+    @GetMapping("/posts-by-user/{userId}")
+    public ResponseEntity<List<Post>> getPostsByUserId(@PathVariable Long userId) {
+        return ResponseEntity.ok(postService.getPostsByUserId(userId));
+    }
+
     @PostMapping(consumes = "multipart/form-data", produces = "application/json")
     public ResponseEntity<Post> createPost(
             @RequestParam("description") String description,

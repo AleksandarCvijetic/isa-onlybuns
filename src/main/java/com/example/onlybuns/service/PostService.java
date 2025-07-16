@@ -25,6 +25,10 @@ public class PostService {
                 .orElseThrow(() -> new RuntimeException("Post not found"));
     }
 
+    public List<Post> getPostsByUserId(Long userId){
+        return postRepository.findByUser_Id(userId);
+    }
+
     public Post createPost(Post post) {
         return postRepository.save(post);
     }
