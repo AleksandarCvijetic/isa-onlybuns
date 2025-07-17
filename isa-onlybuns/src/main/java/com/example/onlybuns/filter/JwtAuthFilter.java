@@ -31,6 +31,15 @@ public class JwtAuthFilter extends OncePerRequestFilter {
         String authHeader = request.getHeader("Authorization");
         String token = null;
         String username = null;
+        String path = request.getRequestURI();
+
+        // Skip JWT check on these public paths
+        if (path.startsWith("/auth/generateToken")
+                || path.startsWith("/auth/addNewUser")
+                || path.startsWith("/actuator/health")) {
+            filterChain.doFilter(request, response);
+            return;
+        }
 
         // Check if the header starts with "Bearer "
         if (authHeader != null && authHeader.startsWith("Bearer ")) {
