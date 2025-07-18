@@ -20,6 +20,10 @@ public class PostService {
         return postRepository.findAll();
     }
 
+    public List<Post> getTop10Posts(){
+        return postRepository.findTop10ByOrderByLikeCountDesc();
+    }
+
     public Post getPostById(Long id) {
         return postRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Post not found"));

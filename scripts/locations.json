@@ -1,0 +1,17 @@
+[
+  {
+    "id": 1,
+    "naziv": "Vet Klinika Zeka",
+    "lokacija": "Cara Dušana 123, Beograd, Srbija"
+  },
+  {
+    "id": 2,
+    "naziv": "Azil za zečeve Novi Sad",
+    "lokacija": "Rumenacki put 12, Novi Sad, Srbija"
+  },
+  {
+    "id": 3,
+    "naziv": "Veterinar Niš",
+    "lokacija": "Zrenjaninski put 155b, Beograd, Srbija"
+  }
+]

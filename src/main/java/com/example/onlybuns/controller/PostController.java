@@ -20,6 +20,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.cache.annotation.Cacheable;
 
 @RestController
 @RequestMapping("/post")
@@ -45,6 +46,11 @@ public class PostController {
         return ResponseEntity.ok(post);
     }
 
+    @GetMapping("/top10")
+    //@Cacheable("top10posts")  // automatsko keširanje!
+    public List<Post> getTop10Posts() {
+        return postService.getTop10Posts();  // sortira ih po likeCount
+    }
 
     // GET endpoint to fetch all posts
     @GetMapping(produces = "application/json")
