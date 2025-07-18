@@ -21,10 +21,18 @@ import java.util.concurrent.TimeUnit;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-@SpringBootTest
+@SpringBootTest(properties = {
+        "management.endpoints.enabled-by-default=false",
+        "management.health.mail.enabled=false",
+        "rabbitmq.exchange=mock-exchange"
+})
+
 @EnableScheduling
 @TestPropertySource(properties = {
         "user.cleanup.cron=-" // Disables the scheduled task
+})
+@TestPropertySource(properties = {
+        "rabbitmq.exchange=mock-exchange"
 })
 public class LikeServiceConcurrencyTest {
     @Autowired
