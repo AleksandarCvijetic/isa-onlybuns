@@ -6,6 +6,7 @@ import com.example.onlybuns.model.Comment;
 import com.example.onlybuns.model.Followers;
 import com.example.onlybuns.model.Post;
 import com.example.onlybuns.model.UserInfo;
+import com.example.onlybuns.ratelimit.InMemoryRateLimiter;
 import com.example.onlybuns.repository.CommentRepository;
 import com.example.onlybuns.repository.FollowersRepository;
 import com.example.onlybuns.repository.PostRepository;
@@ -43,6 +44,9 @@ public class CommentService {
     @Autowired
     public PostRepository postRepository;
 
+    @Autowired
+    public InMemoryRateLimiter inMemoryRateLimiter;
+
     private final ConcurrentMap<Long, Bucket> userBuckets = new ConcurrentHashMap<>();
 
     public Comment createComment(Comment comment) {
@@ -72,6 +76,12 @@ public class CommentService {
 
 
     public Comment addComment(CommentCreationDto dto){
+
+        if (!inMemoryRateLimiter.allowRequest(dto.getUserId())) {
+            throw new RateLimitExceededException(
+                    "Limit exceeded: maximum 5 comments per minute."
+            );
+        }
         Bucket bucket = resolveBucket(dto.getUserId());
         if (!bucket.tryConsume(1)) {
             throw new RateLimitExceededException("Limit exceeded: maximum 60 comments per hour.");

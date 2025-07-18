@@ -12,6 +12,7 @@ import java.util.Map;
 import java.util.UUID;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.micrometer.core.annotation.Timed;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -29,13 +30,15 @@ public class PostController {
     private final UserInfoService userInfoService;
     private final CommentService commentService;
     private final LikeService likeService;
+    private final AdvertisingService advertisingService;
 
     @Autowired
-    public PostController(PostService postService, UserInfoService userInfoService, CommentService commentService, LikeService likeService) {
+    public PostController(PostService postService, UserInfoService userInfoService, CommentService commentService, LikeService likeService, AdvertisingService advertisingService) {
         this.postService = postService;
         this.userInfoService = userInfoService;
         this.commentService = commentService;
         this.likeService = likeService;
+        this.advertisingService = advertisingService;
     }
     @GetMapping("/{id}")
     public ResponseEntity<Post> getPostById(@PathVariable Long id) {
@@ -54,6 +57,7 @@ public class PostController {
     }
 
     @PostMapping(consumes = "multipart/form-data", produces = "application/json")
+    @Timed(value = "posts.create.duration", description = "Time taken to create a new post")
     public ResponseEntity<Post> createPost(
             @RequestParam("description") String description,
             @RequestParam("image") MultipartFile image,
@@ -235,6 +239,14 @@ public class PostController {
     public List<PostReadDto> getAllPosts(@PathVariable Long userId) {
         return postService.getFollowedUserPosts(userId);
     }
+
+    @PutMapping("/{postId}/mark-for-advertising")
+    public ResponseEntity<Void> markPostForAdvertising(@PathVariable Long postId) {
+        Post post = postService.getPostById(postId);
+        advertisingService.sendAdPostMessage(post);
+        return ResponseEntity.ok().build();
+    }
+
 
 }
 

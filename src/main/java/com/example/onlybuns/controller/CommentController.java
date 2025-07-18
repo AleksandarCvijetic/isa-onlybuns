@@ -23,6 +23,7 @@ public class CommentController {
 
     @PostMapping
     public Comment addComment(@RequestBody CommentCreationDto comment) {
+
         return commentService.addComment(comment);
     }
 
