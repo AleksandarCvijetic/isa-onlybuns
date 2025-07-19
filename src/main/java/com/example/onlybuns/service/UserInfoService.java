@@ -5,6 +5,8 @@ import com.example.onlybuns.model.Post;
 import com.example.onlybuns.model.UserInfo;
 import com.example.onlybuns.repository.PostRepository;
 import com.example.onlybuns.repository.UserInfoRepository;
+
+import jakarta.annotation.PostConstruct;
 import jakarta.persistence.criteria.Predicate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -21,7 +23,8 @@ import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.transaction.annotation.Transactional;
-
+import com.google.common.hash.BloomFilter;
+import com.google.common.hash.Funnels;
 
 import java.util.ArrayList;
 import java.util.UUID;
@@ -45,6 +48,16 @@ public class UserInfoService implements UserDetailsService {
 
     @Value("${spring.mail.username}")
     private String fromEmail;
+
+    private BloomFilter<String> bloomFilter;
+
+    @PostConstruct
+    public void initBloomFilter() {
+        bloomFilter = BloomFilter.create(Funnels.unencodedCharsFunnel(), 10000, 0.01);
+        List<String> allUsernames = repository.findAllUsernames(); // Napravi ovaj metod
+        allUsernames.forEach(bloomFilter::put);
+    }
+
 
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
@@ -76,29 +89,46 @@ public class UserInfoService implements UserDetailsService {
         return "Lozinka je uspešno promenjena.";
     }
 
-    public String addUser(UserInfo userInfo) {
+    @Transactional
+    public synchronized String addUser(UserInfo userInfo) {
+        // 🌸 Provera korisničkog imena preko Bloom filtera
+        if (bloomFilter != null && bloomFilter.mightContain(userInfo.getUsername())) {
+            UserInfo existing = getUserByUsername(userInfo.getUsername());
+            if (existing != null) {
+                return "User with that username already exists!";
+            }
+        }
+
+        // Provera emaila
         UserInfo user = getUserByEmail(userInfo.getEmail());
-        if(user != null){
+        if (user != null) {
             return "User with that email already exists!";
         }
 
-        UserInfo u = getUserByUsername(userInfo.getUsername());
-        if(u != null){
-            return "User with that username already exists!";
+        // 🌙 Simulacija konflikta u registraciji za testiranje
+        try {
+            Thread.sleep(500); // koristiš samo za testiranje konkurentnog pristupa
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
         }
-        
 
-        // Encode password
+        // 🔒 Encode password
         userInfo.setPassword(encoder.encode(userInfo.getPassword()));
 
-        // Generate activation token
+        // 🔑 Generate activation token
         String activationToken = UUID.randomUUID().toString();
         userInfo.setActivationToken(activationToken);
         userInfo.setActive(false);
 
+        // 💾 Sačuvaj korisnika
         repository.save(userInfo);
 
-        // Send verification email
+        // 🔁 Ažuriraj bloom filter
+        if (bloomFilter != null) {
+            bloomFilter.put(userInfo.getUsername());
+        }
+
+        // 📧 Pošalji mejl za aktivaciju
         sendActivationEmail(userInfo.getEmail(), activationToken);
 
         return "Registration successful! Please check your email for the activation link.";
