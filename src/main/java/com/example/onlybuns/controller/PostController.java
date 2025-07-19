@@ -47,9 +47,18 @@ public class PostController {
     }
 
     @GetMapping("/top10")
-    //@Cacheable("top10posts")  // automatsko keširanje!
     public List<Post> getTop10Posts() {
         return postService.getTop10Posts();  // sortira ih po likeCount
+    }
+
+    @GetMapping("/likes")
+    public List<Like> getAllLikes(){
+        return likeService.getAllLikes();
+    }
+
+    @GetMapping("/top5weekly")
+    public List<Post> getTop5PostsLast7Days(){
+        return postService.getTop5PostsLast7Days();
     }
 
     // GET endpoint to fetch all posts

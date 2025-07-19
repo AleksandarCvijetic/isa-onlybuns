@@ -2,6 +2,9 @@ package com.example.onlybuns.service;
 
 import com.example.onlybuns.model.Like;
 import com.example.onlybuns.repository.LikeRepository;
+
+import java.util.List;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -21,5 +24,9 @@ public class LikeService {
 
     public Like getLikeByPostAndUser(Long postId, Long userId) {
         return likeRepository.findByPostIdAndUserId(postId,userId);
+    }
+
+    public List<Like> getAllLikes(){
+        return likeRepository.findAll();
     }
 }

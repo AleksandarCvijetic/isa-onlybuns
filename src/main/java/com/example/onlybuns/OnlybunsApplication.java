@@ -10,7 +10,7 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 @SpringBootApplication
 @EnableScheduling
 @EnableRetry
-//@EnableCaching
+@EnableCaching
 public class OnlybunsApplication {
 
 	public static void main(String[] args) {
