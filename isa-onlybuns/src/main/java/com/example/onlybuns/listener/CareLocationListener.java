@@ -12,7 +12,6 @@ import java.util.List;
 @Component
 public class CareLocationListener {
 
-    private final ObjectMapper objectMapper = new ObjectMapper();
     private final CareLocationRepository repository;
 
     public CareLocationListener(CareLocationRepository repository) {
@@ -20,14 +19,12 @@ public class CareLocationListener {
     }
 
     @RabbitListener(queues = "care_locations_queue")
-    public void handleMessage(String poruka) {
+    public void handleMessage(CareLocation lokacija) {
         try {
-            CareLocation lokacija = objectMapper.readValue(poruka, CareLocation.class);
             System.out.println("[🟢] Primljena lokacija: " + lokacija.getNaziv());
-
             repository.save(lokacija); // snimi u bazu
         } catch (Exception e) {
-            System.err.println("[🔴] Greska pri obradi poruke: " + poruka);
+            System.err.println("[🔴] Greska pri obradi poruke: " + lokacija);
             e.printStackTrace();
         }
     }
