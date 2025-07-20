@@ -13,6 +13,7 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
     public void configureMessageBroker(MessageBrokerRegistry registry) {
         registry.enableSimpleBroker("/topic", "/queue"); // za public (topic) i privatne (queue)
         registry.setApplicationDestinationPrefixes("/app"); // frontend šalje poruke ka /app/chat
+        registry.setUserDestinationPrefix("/user");
     }
 
     @Override
