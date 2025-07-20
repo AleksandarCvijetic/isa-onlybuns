@@ -28,7 +28,7 @@ public class ChatRoomController {
 
     @GetMapping("/{roomId}/messages")
     public List<ChatMessageEntity> getLastMessages(@PathVariable Long roomId) {
-        return chatService.getLastMessages(roomId);
+        return chatService.getAllMessages(roomId);
     }
 
     @PostMapping("/private/{username}")

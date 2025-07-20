@@ -84,4 +84,8 @@ public class ChatService {
                 .build();
         return chatMessageRepo.save(message);
     }
+    public List<ChatMessageEntity> getAllMessages(Long roomId) {
+        return chatMessageRepo.findByChatRoom_IdOrderByTimestampAsc(roomId);
+    }
+
 }
