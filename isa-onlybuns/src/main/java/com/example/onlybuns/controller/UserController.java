@@ -16,6 +16,8 @@ import org.springframework.web.bind.annotation.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.security.Principal;
+import java.util.List;
 
 
 @RestController
@@ -93,6 +95,13 @@ public class UserController {
 
         return service.getFilteredUsers(name, email, minPosts, maxPosts, sortBy, sortOrder, page, size);
     }
+    @GetMapping("/users")
+    @PreAuthorize("isAuthenticated()")
+    public List<UserInfoDTO> getAllUsersForChat(Principal principal) {
+        String currentUsername = principal.getName();
+        return service.getAllUsersExcept(currentUsername);
+    }
+
 
 
 

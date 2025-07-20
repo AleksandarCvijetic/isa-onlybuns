@@ -22,5 +22,8 @@ public class UserInfoDTO {
         this.username = userInfo.getUsername();
         this.postCount = userInfo.getPostCount();
     }
+
+    public UserInfoDTO(Long id, String username, String email) {
+    }
 }
 

@@ -44,36 +44,61 @@ public class ProxyController {
     public ResponseEntity<byte[]> forward(HttpMethod method,
                                           HttpServletRequest request,
                                           @RequestBody(required = false) byte[] body) {
+        String uri = request.getRequestURI()
+                + (request.getQueryString() != null ? "?" + request.getQueryString() : "");
+
         for (String target : balancer.getAvailableInstances()) {
             balancer.increment(target);
             try {
-                String uri = request.getRequestURI() +
-                        (request.getQueryString() != null ? "?" + request.getQueryString() : "");
                 log.info("Forwarding {} {} → {}", method, uri, target);
+
+                // Copy headers
                 HttpHeaders headers = new HttpHeaders();
                 Collections.list(request.getHeaderNames())
-                        .forEach(name -> headers.put(name, Collections.list(request.getHeaders(name))));
+                        .forEach(name ->
+                                headers.put(name, Collections.list(request.getHeaders(name)))
+                        );
+
                 HttpEntity<byte[]> entity = new HttpEntity<>(body, headers);
 
+                // Send to backend
                 ResponseEntity<byte[]> response = restTemplate.exchange(
-                        target + uri, method, entity, byte[].class);
-                return response;
-            } catch (RestClientException e) {
-                log.warn("Instance {} failed: {}", target, e.getMessage());
-                balancer.decrement(target);
-                // mark instance unhealthy so chooseInstance won't pick it again
-                balancer.markUnhealthy(target);
-                // try next instance in the loop
-            } finally {
-                // already decremented on failure, but leave here for clarity
-                if (balancer.isHealthy(target)) {
-                    balancer.decrement(target);
+                        target + uri, method, entity, byte[].class
+                );
+
+                // If backend itself failed with 5xx, mark it down and retry
+                if (response.getStatusCode().is5xxServerError()) {
+                    log.warn("Backend {} returned 5xx: {}", target, response.getStatusCode());
+                    balancer.markUnhealthy(target);
+                    throw new RestClientException("5xx from backend");
                 }
+
+                // 2xx and 4xx both just get returned directly
+                return response;
+
+            } catch (HttpClientErrorException clientErr) {
+                // 4xx — client error (e.g. unauthorized): return it, do NOT drop instance
+                log.warn("Received 4xx from {}: {}", target, clientErr.getStatusCode());
+                return ResponseEntity
+                        .status(clientErr.getStatusCode())
+                        .headers(clientErr.getResponseHeaders())
+                        .body(clientErr.getResponseBodyAsByteArray());
+
+            } catch (RestClientException retryableErr) {
+                // I/O errors or 5xx from above — mark instance down and try next
+                log.warn("Instance {} failed (will be marked unhealthy): {}",
+                        target, retryableErr.getMessage());
+                balancer.markUnhealthy(target);
+
+            } finally {
+                balancer.decrement(target);
             }
         }
-        // if we get here, no healthy instances left
-        return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
-                .body(("Load-balancer: all instances are down").getBytes());
+
+        // No healthy backends left
+        return ResponseEntity
+                .status(HttpStatus.SERVICE_UNAVAILABLE)
+                .body("Load‑balancer: all instances are down".getBytes());
     }
 
     @Recover

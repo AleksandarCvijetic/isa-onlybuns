@@ -235,5 +235,13 @@ public class UserInfoService implements UserDetailsService {
         return likeRepository.countTotalNewLikesForPostsSinceLastLogin(postIds, lastLogin);
 
     }
+    public List<UserInfoDTO> getAllUsersExcept(String currentUsername) {
+        List<UserInfo> users = repository.findAll();
+        return users.stream()
+                .filter(u -> !u.getUsername().equals(currentUsername))
+                .map(user -> new UserInfoDTO(user.getId(), user.getUsername(), user.getEmail()))
+                .toList();
+    }
+
 }
 
