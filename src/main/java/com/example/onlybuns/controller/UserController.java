@@ -42,14 +42,17 @@ public class UserController {
 
     @Autowired
     private AuthenticationManager authenticationManager;
-
+    
     private final Map<String, Bucket> buckets = new ConcurrentHashMap<>();
 
-    private Bucket createNewBucket() {
-        Refill refill = Refill.greedy(5, Duration.ofMinutes(1));
-        Bandwidth limit = Bandwidth.classic(5, refill);
-        return Bucket.builder().addLimit(limit).build();
+    private Bucket resolveBucket(String ip) {
+        return buckets.computeIfAbsent(ip, k -> {
+            Refill refill = Refill.greedy(5, Duration.ofMinutes(1)); // 5 pokušaja po 1 minuti
+            Bandwidth limit = Bandwidth.classic(5, refill);
+            return Bucket.builder().addLimit(limit).build();
+        });
     }
+
 
     @GetMapping("/welcome")
     public String welcome() {
@@ -105,11 +108,11 @@ public class UserController {
     @PostMapping("/generateToken")
     public String authenticateAndGetToken(@RequestBody AuthRequest authRequest, HttpServletRequest request) {
         String ip = request.getRemoteAddr();
-        Bucket bucket = buckets.computeIfAbsent(ip, k -> createNewBucket());
+        Bucket bucket = resolveBucket(ip);
 
         if (!bucket.tryConsume(1)) {
-            throw new ResponseStatusException(HttpStatus.TOO_MANY_REQUESTS,
-                    "Too many login attempts. Please try again later.");
+            logger.warn("Too many login attempts from IP: {}", ip);
+            throw new ResponseStatusException(HttpStatus.TOO_MANY_REQUESTS, "Too many login attempts. Try again later.");
         }
 
         try {
@@ -124,11 +127,10 @@ public class UserController {
                 throw new UsernameNotFoundException("Invalid user request!");
             }
         } catch (Exception e) {
-            // Ako je neuspešna autentifikacija, ne dozvoljavamo vraćanje pokušaja (bucket se već smanjio gore)
-            // Samo prosledimo grešku
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid email or password");
         }
     }
+
     @GetMapping("/admin/users")
     @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     public Page<UserInfoDTO> getAllUsers(

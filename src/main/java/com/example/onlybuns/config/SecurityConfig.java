@@ -1,6 +1,7 @@
 package com.example.onlybuns.config;
 
 import com.example.onlybuns.filter.JwtAuthFilter;
+import com.example.onlybuns.filter.LoginRateLimitingFilter;
 import com.example.onlybuns.service.UserInfoService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
@@ -28,6 +29,9 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 public class SecurityConfig {
 
     @Autowired
+    private LoginRateLimitingFilter loginRateLimitingFilter;
+
+    @Autowired
     private JwtAuthFilter authFilter;
 
     @Bean
@@ -38,6 +42,7 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
+            .addFilterBefore(loginRateLimitingFilter, UsernamePasswordAuthenticationFilter.class)
             .csrf(csrf -> csrf.disable()) // Disable CSRF for stateless APIs
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers("/auth/welcome", "/auth/getByUsername",
