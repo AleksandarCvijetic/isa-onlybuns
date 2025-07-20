@@ -7,7 +7,7 @@
         <sourceOutputDir name="target/generated-sources/annotations" />
         <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
         <outputRelativeToContentRoot value="true" />
-        <module name="onlybuns" />
+        <module name="onlybuns (1)" />
         <module name="loadbalancer" />
       </profile>
     </annotationProcessing>
@@ -15,7 +15,8 @@
   <component name="JavacSettings">
     <option name="ADDITIONAL_OPTIONS_OVERRIDE">
       <module name="loadbalancer" options="-parameters" />
-      <module name="onlybuns" options="-parameters" />
+      <module name="onlybuns" options="" />
+      <module name="onlybuns (1)" options="-parameters" />
     </option>
   </component>
 </project>
