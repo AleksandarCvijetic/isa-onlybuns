@@ -26,7 +26,7 @@ public class JwtAuthFilter extends OncePerRequestFilter {
     private UserInfoService userDetailsService;
 
     @Override
-protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
+    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
     String path = request.getRequestURI();
 
     // ⛔️ Ignoriši autentifikaciju za određene rute (dozvoljene u SecurityConfig)

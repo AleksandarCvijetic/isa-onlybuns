@@ -8,6 +8,10 @@ import org.springframework.cache.annotation.Cacheable;
 
 import java.time.LocalDateTime;
 import java.time.ZonedDateTime;
+import com.example.onlybuns.dtos.PostReadDto;
+import com.example.onlybuns.model.Followers;
+import com.example.onlybuns.repository.FollowersRepository;
+
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -15,9 +19,12 @@ import java.util.stream.Collectors;
 public class PostService {
 
     private final PostRepository postRepository;
+    private final FollowersRepository followersRepository;
+
     @Autowired
-    public PostService(PostRepository postRepository) {
+    public PostService(PostRepository postRepository, FollowersRepository followersRepository) {
         this.postRepository = postRepository;
+        this.followersRepository = followersRepository;
     }
 
     public List<Post> getAllPosts() {
@@ -53,4 +60,22 @@ public class PostService {
         postRepository.deleteById(id);
     }
     public Post save(Post post) { return postRepository.save(post);}
+
+    public List<PostReadDto> getFollowedUserPosts(Long userId) {
+        List<Followers> follows = followersRepository.findByFollowerId(userId);
+        List<Long> followeeIds = follows.stream()
+                .map(follow -> follow.getFollowee().getId())
+                .collect(Collectors.toList());
+        List<Post> posts =  postRepository.getByUserIdIn(followeeIds);
+        List<PostReadDto> dtos = posts.stream().map(post -> new PostReadDto(
+                post.getId(),
+                post.getDescription(),
+                post.getImage(),
+                post.getCreatedAt(),
+                post.getLikeCount(),
+                post.getUser().getUsername(),   // mapiramo user -> creatorUsername
+                post.getLocation()
+        )).toList();
+        return dtos;
+    }
 }

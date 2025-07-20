@@ -1,0 +1,25 @@
+<configuration>
+    <!-- Appender koji će pisati samo load-balancer logove -->
+    <appender name="LB_FILE" class="ch.qos.logback.core.FileAppender">
+        <file>loadbalancer.log</file>
+        <append>false</append>
+        <encoder>
+            <pattern>%d{yyyy-MM-dd HH:mm:ss} %-5level [%thread] %logger{36} - %msg%n</pattern>
+        </encoder>
+    </appender>
+
+    <!-- Logger za tvoj paket; additivity=false sprečava prosleđivanje dalje ka root appenderu -->
+    <logger name="com.example.lb" level="INFO" additivity="false">
+        <appender-ref ref="LB_FILE"/>
+    </logger>
+
+    <!-- Root logger ostaje samo na konzoli -->
+    <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} – %msg%n</pattern>
+        </encoder>
+    </appender>
+    <root level="INFO">
+        <appender-ref ref="CONSOLE"/>
+    </root>
+</configuration>
