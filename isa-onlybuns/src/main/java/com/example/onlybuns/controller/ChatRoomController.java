@@ -4,6 +4,7 @@ import com.example.onlybuns.model.ChatMessageEntity;
 import com.example.onlybuns.model.ChatRoom;
 import com.example.onlybuns.service.ChatService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
@@ -18,6 +19,7 @@ import java.util.Set;
 public class ChatRoomController {
 
     private final ChatService chatService;
+    private final SimpMessagingTemplate messaging;
 
     @GetMapping("/rooms")
     public List<ChatRoom> getUserRooms(Principal principal) {
@@ -30,8 +32,21 @@ public class ChatRoomController {
     }
 
     @PostMapping("/private/{username}")
-    public ChatRoom startPrivate(@PathVariable String username, Principal principal) {
-        return chatService.startPrivateChat(principal.getName(), username);
+    public ChatRoom startPrivate(@PathVariable String username,
+                                 Principal principal) {
+
+        // 1. kreiraj / dohvati sobu
+        ChatRoom room = chatService.startPrivateChat(principal.getName(), username);
+
+        // 2. pošalji push drugom učesniku
+        //    • "/user/<username>/queue/new-chat"  (user-dest. prefix je "/user")
+        messaging.convertAndSendToUser(
+                username,          // kome šaljemo
+                "/queue/new-chat", // destinacija (front subskribuje)
+                room               // payload: možeš proslediti ceo ChatRoom ili DTO
+        );
+
+        return room;
     }
 
     @PostMapping("/group")
@@ -45,4 +60,5 @@ public class ChatRoomController {
     public ChatMessageEntity sendMessage(@PathVariable Long roomId, @RequestBody Map<String, String> payload, Principal principal) {
         return chatService.saveMessage(principal.getName(), roomId, payload.get("content"));
     }
+
 }
