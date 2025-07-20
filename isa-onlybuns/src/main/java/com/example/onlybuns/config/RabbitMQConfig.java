@@ -50,4 +50,9 @@ public class RabbitMQConfig {
         template.setMessageConverter(converter);
         return template;
     }
+
+    @Bean
+    public Queue careLocationsQueue() {
+        return new Queue("care_locations_queue", true);
+    }
 }

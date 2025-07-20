@@ -44,6 +44,8 @@ public class UserController {
     private AuthenticationManager authenticationManager;
     
     private final Map<String, Bucket> buckets = new ConcurrentHashMap<>();
+    @Autowired
+    private UserInfoService userInfoService;
 
     private Bucket resolveBucket(String ip) {
         return buckets.computeIfAbsent(ip, k -> {
@@ -122,6 +124,7 @@ public class UserController {
 
             if (authentication.isAuthenticated()) {
                 UserInfo userInfo = service.getUserByEmail(authRequest.getEmail());
+                userInfoService.updateLastLogin(userInfo);
                 return jwtService.generateToken(authRequest.getEmail(), userInfo.getRoles(), userInfo.getId());
             } else {
                 throw new UsernameNotFoundException("Invalid user request!");
