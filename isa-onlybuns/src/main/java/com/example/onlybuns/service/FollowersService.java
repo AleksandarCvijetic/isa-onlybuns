@@ -66,6 +66,15 @@ public class FollowersService {
                 .map(Followers::getFollowee)
                 .collect(Collectors.toList());
     }
+    public List<UserInfo> getMutualFollowers(Long userId) {
+        List<UserInfo> followers = followersRepository.findFollowersOf(userId);
+        List<UserInfo> followees = followersRepository.findFolloweesOf(userId);
+
+        return followers.stream()
+                .filter(followees::contains)
+                .collect(Collectors.toList());
+    }
+
     @Recover
     public void recover(OptimisticLockException e, Long followerId, Long followeeId) {
         // fallback posle iscrpljenih retry-ja

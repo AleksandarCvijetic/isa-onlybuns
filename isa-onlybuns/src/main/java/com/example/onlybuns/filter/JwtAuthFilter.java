@@ -6,6 +6,8 @@ import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -18,6 +20,8 @@ import java.io.IOException;
 
 @Component
 public class JwtAuthFilter extends OncePerRequestFilter {
+
+    private static final Logger log = LoggerFactory.getLogger(JwtAuthFilter.class);
 
     @Autowired
     private JwtService jwtService;
@@ -36,6 +40,9 @@ public class JwtAuthFilter extends OncePerRequestFilter {
         if (authHeader != null && authHeader.startsWith("Bearer ")) {
             token = authHeader.substring(7); // Extract token
             username = jwtService.extractEmail(token); // Extract username from token
+        } else if (request.getParameter("token") != null) {       //  <-- dodatak
+            token = request.getParameter("token");
+            username = jwtService.extractEmail(token);
         }
 
         // If the token is valid and no authentication is set in the context
@@ -44,17 +51,21 @@ public class JwtAuthFilter extends OncePerRequestFilter {
 
             // Validate token and set authentication
             if (jwtService.validateToken(token, userDetails)) {
+
                 UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
                     userDetails,
                     null,
                     userDetails.getAuthorities()
                 );
                 authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+                log.debug("SETTING AUTH  -> {}", authToken);
                 SecurityContextHolder.getContext().setAuthentication(authToken);
             }
         }
 
         // Continue the filter chain
         filterChain.doFilter(request, response);
+        log.debug("AFTER CHAIN   -> {}", SecurityContextHolder.getContext().getAuthentication());
+
     }
 }

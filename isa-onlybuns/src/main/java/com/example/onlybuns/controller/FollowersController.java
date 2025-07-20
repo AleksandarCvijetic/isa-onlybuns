@@ -40,4 +40,10 @@ public class FollowersController {
     public ResponseEntity<List<UserInfo>> getFollowees(@PathVariable Long userId) {
         return ResponseEntity.ok(followersService.getFollowees(userId));
     }
+    @GetMapping("/mutual-follows")
+    public ResponseEntity<List<UserInfo>> getMutualFollows(@RequestParam Long userId) {
+        List<UserInfo> mutuals = followersService.getMutualFollowers(userId);
+        return ResponseEntity.ok(mutuals);
+    }
+
 }

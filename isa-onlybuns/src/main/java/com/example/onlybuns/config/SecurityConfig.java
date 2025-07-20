@@ -41,6 +41,7 @@ public class SecurityConfig {
         http
             .csrf(AbstractHttpConfigurer::disable) // Disable CSRF for stateless APIs
             .authorizeHttpRequests(auth -> auth
+                    .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                 .requestMatchers("/auth/welcome", "/auth/getByUsername",
                 "/post/{postId}/like", "/post/{postId}/comment","/auth/addNewUser",
                 "/auth/activate","/auth/users", "/auth/generateToken", "/post", "/post/*",
@@ -48,15 +49,16 @@ public class SecurityConfig {
                     .requestMatchers(HttpMethod.DELETE, "/post/*").authenticated()
                 .requestMatchers("/auth/user/**").hasAuthority("ROLE_USER")
                 .requestMatchers("/auth/admin/**","/admin/analytics/**").hasAuthority("ROLE_ADMIN")
-                    .requestMatchers("/api/chat/**","/ws/**").permitAll()
+                    .requestMatchers("/ws/**").permitAll()
+                    .requestMatchers(HttpMethod.POST, "/api/chat/private/**").permitAll()
                 .anyRequest().authenticated() // Protect all other endpoints
             )
             .sessionManagement(sess -> sess
                 .sessionCreationPolicy(SessionCreationPolicy.STATELESS) // No sessions
             )
             .authenticationProvider(authenticationProvider()) // Custom authentication provider
-            .addFilterBefore(authFilter, UsernamePasswordAuthenticationFilter.class) // Add JWT filter
-            .cors();
+            .addFilterBefore(authFilter, UsernamePasswordAuthenticationFilter.class); // Add JWT filter
+
 
         return http.build();
     }

@@ -18,7 +18,8 @@ public class ChatRoom {
 
     private String name; // null za privatne četove
 
-    private boolean isGroup;
+    @Column(name = "is_group", nullable = false)
+    private boolean group;
 
     @ManyToMany
     @JoinTable(
@@ -26,6 +27,7 @@ public class ChatRoom {
             joinColumns = @JoinColumn(name = "chat_room_id"),
             inverseJoinColumns = @JoinColumn(name = "user_id")
     )
+
     private Set<UserInfo> users = new HashSet<>();
 
     @ManyToOne

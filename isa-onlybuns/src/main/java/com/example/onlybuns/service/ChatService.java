@@ -7,6 +7,9 @@ import com.example.onlybuns.repository.ChatMessageRepository;
 import com.example.onlybuns.repository.ChatRoomRepository;
 import com.example.onlybuns.repository.UserInfoRepository;
 import lombok.RequiredArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
@@ -15,6 +18,8 @@ import java.util.*;
 @Service
 @RequiredArgsConstructor
 public class ChatService {
+
+    private static final Logger log = LoggerFactory.getLogger(ChatService.class);
 
     private final ChatRoomRepository chatRoomRepo;
     private final ChatMessageRepository chatMessageRepo;
@@ -32,19 +37,22 @@ public class ChatService {
         return messages;
     }
 
-    public ChatRoom startPrivateChat(String currentUser, String otherUsername) {
-        UserInfo user1 = userRepo.findByUsername(currentUser).orElseThrow();
-        UserInfo user2 = userRepo.findByUsername(otherUsername).orElseThrow();
+    public ChatRoom startPrivateChat(String sender, String receiver) {
+        log.info("Starting private chat");
+        log.info("Sender: " + sender);
+        log.info("Receiver: " + receiver);
+        UserInfo u1 = userRepo.findByEmail(sender)          // ovde je bilo po username ali sender je email a receiver username!!!!!!
+                .orElseThrow(() -> new UsernameNotFoundException(sender));
+        UserInfo u2 = userRepo.findByUsername(receiver)
+                .orElseThrow(() -> new UsernameNotFoundException(receiver));
 
-        List<UserInfo> pair = List.of(user1, user2);
-        Optional<ChatRoom> existing = chatRoomRepo.findByIsGroupFalseAndUsersIn(pair);
-        if (existing.isPresent()) return existing.get();
-
-        ChatRoom room = ChatRoom.builder()
-                .isGroup(false)
-                .users(new HashSet<>(pair))
-                .build();
-        return chatRoomRepo.save(room);
+        return chatRoomRepo.findPrivateRoom(u1, u2)
+                .orElseGet(() -> {
+                    ChatRoom room = new ChatRoom();
+                    room.setGroup(false);
+                    room.setUsers(Set.of(u1, u2));
+                    return chatRoomRepo.save(room);
+                });
     }
 
     public ChatRoom createGroupChat(String adminUsername, Set<String> usernames, String groupName) {
@@ -56,7 +64,7 @@ public class ChatService {
         users.add(admin);
 
         ChatRoom group = ChatRoom.builder()
-                .isGroup(true)
+                .group(true)
                 .name(groupName)
                 .admin(admin)
                 .users(users)
@@ -65,7 +73,7 @@ public class ChatService {
     }
 
     public ChatMessageEntity saveMessage(String senderUsername, Long roomId, String content) {
-        UserInfo sender = userRepo.findByUsername(senderUsername).orElseThrow();
+        UserInfo sender = userRepo.findByEmail(senderUsername).orElseThrow();
         ChatRoom room = chatRoomRepo.findById(roomId).orElseThrow();
 
         ChatMessageEntity message = ChatMessageEntity.builder()
