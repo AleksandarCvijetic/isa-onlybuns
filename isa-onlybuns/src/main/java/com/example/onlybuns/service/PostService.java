@@ -8,6 +8,7 @@ import com.example.onlybuns.repository.PostRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -23,8 +24,24 @@ public class PostService {
         this.followersRepository = followersRepository;
     }
 
-    public List<Post> getAllPosts() {
-        return postRepository.findAll();
+    public List<PostReadDto> getAllPosts() {
+        List<Post> posts = postRepository.findAll();
+        List<PostReadDto> dtos = new ArrayList<>();
+
+        for (Post post : posts) {
+            PostReadDto dto = new PostReadDto();
+            dto.setId(post.getId());
+            dto.setDescription(post.getDescription());
+            dto.setImage(post.getImage());
+            dto.setCreatedAt(post.getCreatedAt());
+            dto.setLikeCount(post.getLikeCount());
+            dto.setCreatorUsername(post.getUser().getUsername());
+            dto.setLocation(post.getLocation());
+
+            dtos.add(dto);
+        }
+
+        return dtos;
     }
 
     public Post getPostById(Long id) {
@@ -53,7 +70,7 @@ public class PostService {
                 post.getImage(),
                 post.getCreatedAt(),
                 post.getLikeCount(),
-                post.getUser().getUsername(),   // mapiramo user -> creatorUsername
+                post.getUser().getUsername(),
                 post.getLocation()
         )).toList();
         return dtos;
