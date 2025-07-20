@@ -44,7 +44,7 @@ public class SecurityConfig {
                     .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                 .requestMatchers("/auth/welcome", "/auth/getByUsername",
                 "/post/{postId}/like", "/post/{postId}/comment","/auth/addNewUser",
-                "/auth/activate","/auth/users", "/auth/generateToken", "/post", "/post/*",
+                "/auth/activate/**","/auth/users", "/auth/generateToken", "/post", "/post/*",
                 "/images/{filename:.+}","/followers/**","/api/data", "api/slow", "/actuator/health").permitAll()
                     .requestMatchers(HttpMethod.DELETE, "/post/*").authenticated()
                 .requestMatchers("/auth/user/**").hasAuthority("ROLE_USER")

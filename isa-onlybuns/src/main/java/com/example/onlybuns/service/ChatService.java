@@ -26,7 +26,7 @@ public class ChatService {
     private final UserInfoRepository userRepo;
 
     public List<ChatRoom> getUserChats(String username) {
-        UserInfo user = userRepo.findByUsername(username).orElseThrow();
+        UserInfo user = userRepo.findByEmail(username).orElseThrow();       //email??
         return chatRoomRepo.findByUsersContains(user);
     }
 
