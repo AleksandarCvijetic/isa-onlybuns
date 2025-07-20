@@ -48,6 +48,10 @@ public class PostService {
         return dtos;
     }
 
+    public List<Post> getAll(){
+        return postRepository.findAll();
+    }
+
     @Cacheable("top10PostsCache")
     public List<Post> getTop10Posts(){
         return postRepository.findTop10ByOrderByLikeCountDesc();
