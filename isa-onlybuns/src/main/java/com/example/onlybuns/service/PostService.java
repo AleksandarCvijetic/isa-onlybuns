@@ -12,6 +12,7 @@ import com.example.onlybuns.dtos.PostReadDto;
 import com.example.onlybuns.model.Followers;
 import com.example.onlybuns.repository.FollowersRepository;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -27,8 +28,24 @@ public class PostService {
         this.followersRepository = followersRepository;
     }
 
-    public List<Post> getAllPosts() {
-        return postRepository.findAll();
+    public List<PostReadDto> getAllPosts() {
+        List<Post> posts = postRepository.findAll();
+        List<PostReadDto> dtos = new ArrayList<>();
+
+        for (Post post : posts) {
+            PostReadDto dto = new PostReadDto();
+            dto.setId(post.getId());
+            dto.setDescription(post.getDescription());
+            dto.setImage(post.getImage());
+            dto.setCreatedAt(post.getCreatedAt());
+            dto.setLikeCount(post.getLikeCount());
+            dto.setCreatorUsername(post.getUser().getUsername());
+            dto.setLocation(post.getLocation());
+
+            dtos.add(dto);
+        }
+
+        return dtos;
     }
 
     @Cacheable("top10PostsCache")
@@ -73,7 +90,7 @@ public class PostService {
                 post.getImage(),
                 post.getCreatedAt(),
                 post.getLikeCount(),
-                post.getUser().getUsername(),   // mapiramo user -> creatorUsername
+                post.getUser().getUsername(),
                 post.getLocation()
         )).toList();
         return dtos;

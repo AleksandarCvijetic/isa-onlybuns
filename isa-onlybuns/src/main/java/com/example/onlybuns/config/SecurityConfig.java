@@ -58,12 +58,13 @@ public class SecurityConfig {
                 .requestMatchers("/auth/welcome", "/auth/getByUsername",
                 "/post/{postId}/like", "/post/top5weekly","/post/{postId}/comment","/post/posts-by-user/{userId}","/auth/addNewUser",
                 "/auth/activate", "/auth/generateToken", "/post", "/post/**",
-                "/images/**","/api/care-locations","/followers/**", "/comments", "/auth/userId/{userId}", "/auth/change-password","/comments/{$postId}", "/actuator/**", "/api/data", "api/slow", "/actuator/health").permitAll()
+                "/images/**","/api/care-locations","/followers/**", "/comments", "/auth/userId/{userId}", "/actuator/prometheus","/auth/change-password","/comments/{$postId}", "/actuator/**", "/api/data", "api/slow", "/actuator/health").permitAll()
                     .requestMatchers(HttpMethod.DELETE, "/post/*").authenticated()
                 .requestMatchers("/auth/user/**").hasAuthority("ROLE_USER")
                     .requestMatchers("/post/followedUserPosts/**").hasAuthority("ROLE_USER")
                     .requestMatchers("/auth/admin/**","/admin/analytics/**").hasAuthority("ROLE_ADMIN")
-                .anyRequest().authenticated() // Protect all other endpoints
+                    .requestMatchers("/post/{postId}/mark-for-advertising").hasAuthority("ROLE_ADMIN")
+                    .anyRequest().authenticated() // Protect all other endpoints
             )
             .sessionManagement(sess -> sess
                 .sessionCreationPolicy(SessionCreationPolicy.STATELESS) // No sessions

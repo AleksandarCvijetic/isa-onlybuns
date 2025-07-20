@@ -67,7 +67,7 @@ public class PostController {
 
     // GET endpoint to fetch all posts
     @GetMapping(produces = "application/json")
-    public List<Post> getAllPosts() {
+    public List<PostReadDto> getAllPosts() {
         return postService.getAllPosts();
     }
 
