@@ -1,4 +1,0 @@
-com\example\onlybuns\service\FollowersServiceConcurrencyTest$TestConfig.class
-com\example\onlybuns\service\LikeServiceConcurrencyTest.class
-com\example\onlybuns\service\FollowersServiceConcurrencyTest.class
-com\example\onlybuns\service\FollowersServiceRateLimiterTest.class

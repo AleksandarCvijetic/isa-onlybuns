@@ -1,12 +1,15 @@
 package com.example.onlybuns.service;
 
 import com.example.onlybuns.model.Like;
-import com.example.onlybuns.model.Post;
-import com.example.onlybuns.model.UserInfo;
 import com.example.onlybuns.repository.LikeRepository;
-import com.example.onlybuns.repository.PostRepository;
+
+import java.util.List;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import com.example.onlybuns.model.Post;
+import com.example.onlybuns.model.UserInfo;
+import com.example.onlybuns.repository.PostRepository;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
@@ -28,6 +31,9 @@ public class LikeService {
         return likeRepository.findByPostIdAndUserId(postId,userId);
     }
 
+    public List<Like> getAllLikes(){
+        return likeRepository.findAll();
+    }
     @Transactional
     public Like createLike(UserInfo user, Long postId) {
 

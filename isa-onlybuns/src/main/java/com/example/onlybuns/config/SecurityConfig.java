@@ -1,6 +1,7 @@
 package com.example.onlybuns.config;
 
 import com.example.onlybuns.filter.JwtAuthFilter;
+import com.example.onlybuns.filter.LoginRateLimitingFilter;
 import com.example.onlybuns.service.UserInfoService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
@@ -29,6 +30,9 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 public class SecurityConfig {
 
     @Autowired
+    private LoginRateLimitingFilter loginRateLimitingFilter;
+
+    @Autowired
     private JwtAuthFilter authFilter;
 
     private final UserDetailsService userDetailsService;
@@ -48,12 +52,13 @@ public class SecurityConfig {
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
                 .cors(Customizer.withDefaults())
+            .addFilterBefore(loginRateLimitingFilter, UsernamePasswordAuthenticationFilter.class)
             .csrf(csrf -> csrf.disable()) // Disable CSRF for stateless APIs
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers("/auth/welcome", "/auth/getByUsername",
-                "/post/{postId}/like", "/post/{postId}/comment","/auth/addNewUser",
+                "/post/{postId}/like", "/post/top5weekly","/post/{postId}/comment","/post/posts-by-user/{userId}","/auth/addNewUser",
                 "/auth/activate", "/auth/generateToken", "/post", "/post/**",
-                "/images/**","/followers/**", "/comments", "/comments/{$postId}", "/actuator/**","/actuator/prometheus", "/api/data", "api/slow", "/actuator/health").permitAll()
+                "/images/**","/api/care-locations","/followers/**", "/comments", "/auth/userId/{userId}", "/actuator/prometheus","/auth/change-password","/comments/{$postId}", "/actuator/**", "/api/data", "api/slow", "/actuator/health").permitAll()
                     .requestMatchers(HttpMethod.DELETE, "/post/*").authenticated()
                 .requestMatchers("/auth/user/**").hasAuthority("ROLE_USER")
                     .requestMatchers("/post/followedUserPosts/**").hasAuthority("ROLE_USER")

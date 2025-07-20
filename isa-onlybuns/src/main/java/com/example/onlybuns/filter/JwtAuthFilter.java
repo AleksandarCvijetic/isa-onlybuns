@@ -27,34 +27,39 @@ public class JwtAuthFilter extends OncePerRequestFilter {
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
-        // Retrieve the Authorization header
-        String authHeader = request.getHeader("Authorization");
-        String token = null;
-        String username = null;
+    String path = request.getRequestURI();
 
-        // Check if the header starts with "Bearer "
-        if (authHeader != null && authHeader.startsWith("Bearer ")) {
-            token = authHeader.substring(7); // Extract token
-            username = jwtService.extractEmail(token); // Extract username from token
-        }
-
-        // If the token is valid and no authentication is set in the context
-        if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
-            UserDetails userDetails = userDetailsService.loadUserByUsername(username);
-
-            // Validate token and set authentication
-            if (jwtService.validateToken(token, userDetails)) {
-                UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
-                    userDetails,
-                    null,
-                    userDetails.getAuthorities()
-                );
-                authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-                SecurityContextHolder.getContext().setAuthentication(authToken);
-            }
-        }
-
-        // Continue the filter chain
+    // ⛔️ Ignoriši autentifikaciju za određene rute (dozvoljene u SecurityConfig)
+    if (path.startsWith("/auth") || path.startsWith("/images") || path.startsWith("/followers")) {
         filterChain.doFilter(request, response);
+        return;
     }
+
+    // ✅ Nastavi obradu tokena
+    String authHeader = request.getHeader("Authorization");
+    String token = null;
+    String username = null;
+
+    if (authHeader != null && authHeader.startsWith("Bearer ")) {
+        token = authHeader.substring(7);
+        username = jwtService.extractEmail(token);
+    }
+
+    if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
+        UserDetails userDetails = userDetailsService.loadUserByUsername(username);
+
+        if (jwtService.validateToken(token, userDetails)) {
+            UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
+                userDetails,
+                null,
+                userDetails.getAuthorities()
+            );
+            authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+            SecurityContextHolder.getContext().setAuthentication(authToken);
+        }
+    }
+
+    filterChain.doFilter(request, response);
+}
+
 }

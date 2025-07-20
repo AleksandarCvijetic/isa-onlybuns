@@ -31,12 +31,12 @@ public class FollowersController {
         return ResponseEntity.ok("Successfully unfollowed user");
     }
 
-    @GetMapping("/{userId}/followers")
+    @GetMapping("/followers/{userId}")
     public ResponseEntity<List<UserInfo>> getFollowers(@PathVariable Long userId) {
         return ResponseEntity.ok(followersService.getFollowers(userId));
     }
 
-    @GetMapping("/{userId}/followees")
+    @GetMapping("/followees/{userId}")
     public ResponseEntity<List<UserInfo>> getFollowees(@PathVariable Long userId) {
         return ResponseEntity.ok(followersService.getFollowees(userId));
     }

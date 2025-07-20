@@ -22,6 +22,8 @@ public interface UserInfoRepository extends JpaRepository<UserInfo, Integer>, Jp
     @Modifying
     @Query("DELETE FROM UserInfo u WHERE u.isActive = false AND u.registrationDate < :cutoffDate")
     void deleteByIsActiveFalseAndRegistrationDateBefore(LocalDateTime cutoffDate);
+    @Query("SELECT u.username FROM UserInfo u")
+    List<String> findAllUsernames();
     @Modifying
     @Query("UPDATE UserInfo u SET u.lastLogin = :lastLogin, u.isNotified = false WHERE u.id = :userId")
     void updateLastLoginByUserId(@Param("lastLogin") LocalDateTime lastLogin,

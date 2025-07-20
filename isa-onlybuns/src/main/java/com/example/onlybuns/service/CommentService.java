@@ -30,6 +30,7 @@ import com.example.onlybuns.exceptions.RateLimitExceededException;
 public class CommentService {
 
     private final CommentRepository commentRepository;
+
     @Autowired
     private FollowersRepository followersRepository;
 

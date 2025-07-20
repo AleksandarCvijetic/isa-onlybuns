@@ -13,6 +13,7 @@ public class UserInfoDTO {
     private String name;
     private String email;
     private String username;
+    private String address;
     private long postCount; // Dynamically fetched
 
     public UserInfoDTO(UserInfo userInfo) {
@@ -20,6 +21,7 @@ public class UserInfoDTO {
         this.name = userInfo.getName();
         this.email = userInfo.getEmail();
         this.username = userInfo.getUsername();
+        this.address = userInfo.getAddress();
         this.postCount = userInfo.getPostCount();
     }
 }

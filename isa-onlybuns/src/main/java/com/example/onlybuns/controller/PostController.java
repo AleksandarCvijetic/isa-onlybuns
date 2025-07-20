@@ -22,6 +22,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.cache.annotation.Cacheable;
 
 @RestController
 @RequestMapping("/post")
@@ -49,11 +50,35 @@ public class PostController {
         return ResponseEntity.ok(post);
     }
 
+    @GetMapping("/top10")
+    public List<Post> getTop10Posts() {
+        return postService.getTop10Posts();  // sortira ih po likeCount
+    }
+
+    @GetMapping("/likes")
+    public List<Like> getAllLikes(){
+        return likeService.getAllLikes();
+    }
+
+    @GetMapping("/top5weekly")
+    public List<Post> getTop5PostsLast7Days(){
+        return postService.getTop5PostsLast7Days();
+    }
 
     // GET endpoint to fetch all posts
     @GetMapping(produces = "application/json")
     public List<PostReadDto> getAllPosts() {
         return postService.getAllPosts();
+    }
+
+    @GetMapping("/getAll")
+    public List<Post> getAll() {
+        return postService.getAll();
+    }
+
+    @GetMapping("/posts-by-user/{userId}")
+    public ResponseEntity<List<Post>> getPostsByUserId(@PathVariable Long userId) {
+        return ResponseEntity.ok(postService.getPostsByUserId(userId));
     }
 
     @PostMapping(consumes = "multipart/form-data", produces = "application/json")
