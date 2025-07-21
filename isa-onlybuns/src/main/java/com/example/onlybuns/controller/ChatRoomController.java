@@ -56,7 +56,7 @@ public class ChatRoomController {
         messaging.convertAndSendToUser(
                 username,          // kome šaljemo
                 "/queue/new-chat", // destinacija (front subskribuje)
-                room               // payload: možeš proslediti ceo ChatRoom ili DTO
+                toDto(room)               // payload: možeš proslediti ceo ChatRoom ili DTO
         );
 
         return room;

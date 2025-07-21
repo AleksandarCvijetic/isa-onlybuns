@@ -43,7 +43,7 @@ public class SecurityConfig {
             .authorizeHttpRequests(auth -> auth
                     .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                 .requestMatchers("/auth/welcome", "/auth/getByUsername","/auth/getById/",
-                "/api/chat/group",
+                "/api/chat/group","/api/chat/**",
                 "/post/{postId}/like", "/post/{postId}/comment","/auth/addNewUser",
                 "/auth/activate/**","/auth/users", "/auth/generateToken", "/post", "/post/*",
                 "/images/{filename:.+}","/followers/**","/api/data", "api/slow", "/actuator/health").permitAll()
