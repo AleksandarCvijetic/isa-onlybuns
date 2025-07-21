@@ -11,7 +11,7 @@ connection = pika.BlockingConnection(pika.ConnectionParameters('localhost'))
 channel = connection.channel()
 
 # Kreiraj red
-channel.queue_declare(queue='care_locations_queue')
+channel.queue_declare(queue='care_locations_queue', durable=True)
 
 # Slanje svake 10 minuta
 for location in locations:
