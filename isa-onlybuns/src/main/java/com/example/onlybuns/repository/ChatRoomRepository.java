@@ -10,14 +10,32 @@ import java.util.List;
 import java.util.Optional;
 
 public interface ChatRoomRepository extends JpaRepository<ChatRoom, Long> {
-    List<ChatRoom> findByUsersContains(UserInfo user);
+    /**
+     * Find every room where the given user is a key in membersJoinedAt.
+     */
     @Query("""
-       SELECT r
-       FROM ChatRoom r
-       WHERE r.group = false
-         AND :u1 MEMBER OF r.users
-         AND :u2 MEMBER OF r.users
+    SELECT c
+      FROM ChatRoom c
+      JOIN c.membersJoinedAt m
+     WHERE KEY(m) = :user
     """)
-    Optional<ChatRoom> findPrivateRoom(@Param("u1") UserInfo u1,
-                                       @Param("u2") UserInfo u2);
+    List<ChatRoom> findByMember(@Param("user") UserInfo user);
+
+    /**
+     * Find an existing private‐chat (group=false) whose two members
+     * are exactly u1 and u2.
+     */
+    @Query("""
+    SELECT c
+      FROM ChatRoom c
+      JOIN c.membersJoinedAt m1
+      JOIN c.membersJoinedAt m2
+     WHERE c.group = false
+       AND KEY(m1) = :u1
+       AND KEY(m2) = :u2
+    """)
+    Optional<ChatRoom> findPrivateRoom(
+            @Param("u1") UserInfo u1,
+            @Param("u2") UserInfo u2
+    );
 }

@@ -43,6 +43,10 @@ public class UserController {
     public UserInfo getUserByUsername(@RequestBody UserInfo userInfo){
         return service.getUserByUsername(userInfo.getUsername());
     }
+    @GetMapping("/getById/{id}")
+    public UserInfo getUserById(@PathVariable long id){
+        return service.getUserById(id);
+    }
 
     @PostMapping("/addNewUser")
     public String addNewUser(@RequestBody UserInfo userInfo) {
