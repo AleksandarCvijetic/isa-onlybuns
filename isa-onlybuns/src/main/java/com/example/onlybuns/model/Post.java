@@ -7,6 +7,9 @@ import lombok.NoArgsConstructor;
 
 import java.time.ZonedDateTime;
 import java.util.List;
+
+import com.fasterxml.jackson.annotation.JsonManagedReference;
+
 import java.util.ArrayList;
 
 @Entity
@@ -31,6 +34,11 @@ public class Post {
 
     @Embedded
     private Location location;
+
+
+    @OneToMany(mappedBy = "post", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonManagedReference
+    private List<Like> likes = new ArrayList<>();
 
     public void incrementLikeCount() {
         this.likeCount++;

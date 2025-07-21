@@ -1,5 +1,6 @@
 package com.example.onlybuns.controller;
 
+import com.example.onlybuns.dtos.PostReadDto;
 import com.example.onlybuns.model.*;
 import com.example.onlybuns.service.*;
 
@@ -11,6 +12,7 @@ import java.util.Map;
 import java.util.UUID;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.micrometer.core.annotation.Timed;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -20,6 +22,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.cache.annotation.Cacheable;
 
 @RestController
 @RequestMapping("/post")
@@ -28,13 +31,15 @@ public class PostController {
     private final UserInfoService userInfoService;
     private final CommentService commentService;
     private final LikeService likeService;
+    private final AdvertisingService advertisingService;
 
     @Autowired
-    public PostController(PostService postService, UserInfoService userInfoService, CommentService commentService, LikeService likeService) {
+    public PostController(PostService postService, UserInfoService userInfoService, CommentService commentService, LikeService likeService, AdvertisingService advertisingService) {
         this.postService = postService;
         this.userInfoService = userInfoService;
         this.commentService = commentService;
         this.likeService = likeService;
+        this.advertisingService = advertisingService;
     }
     @GetMapping("/{id}")
     public ResponseEntity<Post> getPostById(@PathVariable Long id) {
@@ -45,14 +50,39 @@ public class PostController {
         return ResponseEntity.ok(post);
     }
 
+    @GetMapping("/top10")
+    public List<Post> getTop10Posts() {
+        return postService.getTop10Posts();  // sortira ih po likeCount
+    }
+
+    @GetMapping("/likes")
+    public List<Like> getAllLikes(){
+        return likeService.getAllLikes();
+    }
+
+    @GetMapping("/top5weekly")
+    public List<Post> getTop5PostsLast7Days(){
+        return postService.getTop5PostsLast7Days();
+    }
 
     // GET endpoint to fetch all posts
     @GetMapping(produces = "application/json")
-    public List<Post> getAllPosts() {
+    public List<PostReadDto> getAllPosts() {
         return postService.getAllPosts();
     }
 
+    @GetMapping("/getAll")
+    public List<Post> getAll() {
+        return postService.getAll();
+    }
+
+    @GetMapping("/posts-by-user/{userId}")
+    public ResponseEntity<List<Post>> getPostsByUserId(@PathVariable Long userId) {
+        return ResponseEntity.ok(postService.getPostsByUserId(userId));
+    }
+
     @PostMapping(consumes = "multipart/form-data", produces = "application/json")
+    @Timed(value = "posts.create.duration", description = "Time taken to create a new post")
     public ResponseEntity<Post> createPost(
             @RequestParam("description") String description,
             @RequestParam("image") MultipartFile image,
@@ -158,10 +188,10 @@ public class PostController {
         like.setPost(post);
         like.setUser(user);
 
-        likeService.createLike(like); // Create like in the database
+        likeService.createLike(user, post.getId()); // Create like in the database
 
-        post.incrementLikeCount(); // Increment the like count for the post
-        postService.save(post); // Save updated post with new like count
+        //post.incrementLikeCount(); // Increment the like count for the post
+        //postService.save(post); // Save updated post with new like count
 
         return ResponseEntity.ok(post); // Return updated post with likes
     }
@@ -230,6 +260,17 @@ public class PostController {
         return ResponseEntity.noContent().build();
     }
 
+    @GetMapping("/followedUserPosts/{userId}")
+    public List<PostReadDto> getAllPosts(@PathVariable Long userId) {
+        return postService.getFollowedUserPosts(userId);
+    }
+
+    @PutMapping("/{postId}/mark-for-advertising")
+    public ResponseEntity<Void> markPostForAdvertising(@PathVariable Long postId) {
+        Post post = postService.getPostById(postId);
+        advertisingService.sendAdPostMessage(post);
+        return ResponseEntity.ok().build();
+    }
 
 
 }

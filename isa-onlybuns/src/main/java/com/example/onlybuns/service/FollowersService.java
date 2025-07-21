@@ -52,8 +52,10 @@ public class FollowersService {
     }
     @Transactional
     public void unfollowUser(Long followerId, Long followeeId) {
-        Followers follow = followersRepository.findByFollower_IdAndFollowee_Id(followerId, followeeId)
-                .orElseThrow(() -> new RuntimeException("Follow relationship not found."));
+        Followers follow = followersRepository.findByFollower_IdAndFollowee_Id(followerId, followeeId);
+        if(follow == null){
+            return;
+        }
         followersRepository.delete(follow);
     }
     public List<UserInfo> getFollowers(Long userId) {

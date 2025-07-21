@@ -106,6 +106,6 @@ public class ProxyController {
         log.error("Retries exhausted for request", ex);
         return ResponseEntity
                 .status(HttpStatus.SERVICE_UNAVAILABLE)
-                .body("Load-balancer: all retries failed: " + ex.getMessage());
+                .body("Load‑balancer: all retries failed: " + ex.getMessage());
     }
 }
