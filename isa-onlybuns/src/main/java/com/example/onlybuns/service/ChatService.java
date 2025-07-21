@@ -103,7 +103,7 @@ public class ChatService {
         ChatRoom room = chatRoomRepo.findById(roomId).orElseThrow();
         UserInfo admin = userRepo.findByEmail(adminUsername).orElseThrow();
         log.debug("admin: " + admin.getUsername());
-        if(!room.getAdmin().getUsername().equals(adminUsername)){
+        if(!room.getAdmin().getUsername().equals(admin.getUsername())){
             throw new AccessDeniedException("Only admin can remove");
         }
         UserInfo user = userRepo.findByUsername(usernameToRemove).orElseThrow();
