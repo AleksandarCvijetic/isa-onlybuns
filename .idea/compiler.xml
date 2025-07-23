@@ -11,11 +11,13 @@
         <module name="loadbalancer" />
       </profile>
     </annotationProcessing>
+    <bytecodeTargetLevel>
+      <module name="Backend" target="1.5" />
+    </bytecodeTargetLevel>
   </component>
   <component name="JavacSettings">
     <option name="ADDITIONAL_OPTIONS_OVERRIDE">
       <module name="loadbalancer" options="-parameters" />
-      <module name="onlybuns" options="" />
       <module name="onlybuns (1)" options="-parameters" />
     </option>
   </component>

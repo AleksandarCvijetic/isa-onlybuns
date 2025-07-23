@@ -1,0 +1,45 @@
+version: "3.8"
+services:
+  postgres:
+    image: postgres:15
+    environment:
+      POSTGRES_DB: onlybunsdb
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    ports: ["5432:5432"]
+
+  rabbitmq:
+    image: rabbitmq:3-management
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+    ports: ["5672:5672","15672:15672"]
+
+  onlybuns1:
+    build:
+      context: .
+      dockerfile: isa-onlybuns/Dockerfile
+    container_name: onlybuns1
+    depends_on: [postgres,rabbitmq]
+    ports: ["8081:8081"]
+
+  onlybuns2:
+    build:
+      context: .
+      dockerfile: isa-onlybuns/Dockerfile
+    container_name: onlybuns2
+    depends_on: [postgres,rabbitmq]
+    ports: ["8082:8081"]
+
+  loadbalancer:
+    build:
+      context: .
+      dockerfile: loadbalancer/Dockerfile
+    container_name: onlybuns-lb
+    depends_on: [onlybuns1,onlybuns2]
+    ports: ["8080:8080"]
+
+volumes:
+  pgdata:

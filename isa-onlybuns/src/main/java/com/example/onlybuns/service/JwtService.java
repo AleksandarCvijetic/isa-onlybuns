@@ -5,6 +5,8 @@ import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Component;
 
@@ -17,6 +19,7 @@ import java.util.function.Function;
 @Component
 public class JwtService {
 
+    private static final Logger log = LoggerFactory.getLogger(JwtService.class);
     // Replace this with a secure key in a real application, ideally fetched from environment variables
     public static final String SECRET = "5367566B59703373367639792F423F4528482B4D6251655468576D5A71347437";
 
@@ -78,6 +81,7 @@ public class JwtService {
     // Validate the token against user details and expiration
     public Boolean validateToken(String token, UserDetails userDetails) {
         final String email = extractEmail(token);
+        log.debug("JWT check: {} vs {}", email, userDetails.getUsername());
         return (email.equals(userDetails.getUsername()) && !isTokenExpired(token));
     }
 }

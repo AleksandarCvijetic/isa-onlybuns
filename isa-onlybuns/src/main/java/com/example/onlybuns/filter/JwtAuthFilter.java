@@ -6,6 +6,8 @@ import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -19,6 +21,8 @@ import java.io.IOException;
 @Component
 public class JwtAuthFilter extends OncePerRequestFilter {
 
+    private static final Logger log = LoggerFactory.getLogger(JwtAuthFilter.class);
+
     @Autowired
     private JwtService jwtService;
 
@@ -26,40 +30,55 @@ public class JwtAuthFilter extends OncePerRequestFilter {
     private UserInfoService userDetailsService;
 
     @Override
-    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
-    String path = request.getRequestURI();
+    protected void doFilterInternal(HttpServletRequest request,
+                                    HttpServletResponse response,
+                                    FilterChain filterChain)
+            throws ServletException, IOException {
 
-    // ⛔️ Ignoriši autentifikaciju za određene rute (dozvoljene u SecurityConfig)
-    if (path.startsWith("/auth") || path.startsWith("/images") || path.startsWith("/followers")) {
-        filterChain.doFilter(request, response);
-        return;
-    }
+        String path = request.getRequestURI();
 
-    // ✅ Nastavi obradu tokena
-    String authHeader = request.getHeader("Authorization");
-    String token = null;
-    String username = null;
+        // ⛔️ Skip JWT auth for public endpoints
+        if (path.startsWith("/images")
+                || path.startsWith("/followers")
+                || path.startsWith("/ws")) {
 
-    if (authHeader != null && authHeader.startsWith("Bearer ")) {
-        token = authHeader.substring(7);
-        username = jwtService.extractEmail(token);
-    }
-
-    if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
-        UserDetails userDetails = userDetailsService.loadUserByUsername(username);
-
-        if (jwtService.validateToken(token, userDetails)) {
-            UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
-                userDetails,
-                null,
-                userDetails.getAuthorities()
-            );
-            authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-            SecurityContextHolder.getContext().setAuthentication(authToken);
+            filterChain.doFilter(request, response);
+            return;
         }
+
+        // ✅ Otherwise extract token (header or query-param) and authenticate
+        String authHeader = request.getHeader("Authorization");
+        String token = null;
+        String username = null;
+
+        if (authHeader != null && authHeader.startsWith("Bearer ")) {
+            token = authHeader.substring(7);
+            username = jwtService.extractEmail(token);
+        } else if (request.getParameter("token") != null) {
+            token = request.getParameter("token");
+            username = jwtService.extractEmail(token);
+        }
+
+        // If we got a valid username and there's no existing Authentication
+        if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
+            UserDetails userDetails = userDetailsService.loadUserByUsername(username);
+
+            if (jwtService.validateToken(token, userDetails)) {
+                UsernamePasswordAuthenticationToken authToken =
+                        new UsernamePasswordAuthenticationToken(
+                                userDetails,
+                                null,
+                                userDetails.getAuthorities()
+                        );
+                authToken.setDetails(
+                        new WebAuthenticationDetailsSource().buildDetails(request)
+                );
+                log.debug("SETTING AUTH  -> {}", authToken);
+                SecurityContextHolder.getContext().setAuthentication(authToken);
+            }
+        }
+
+        filterChain.doFilter(request, response);
+        log.debug("AFTER CHAIN   -> {}", SecurityContextHolder.getContext().getAuthentication());
     }
-
-    filterChain.doFilter(request, response);
-}
-
 }

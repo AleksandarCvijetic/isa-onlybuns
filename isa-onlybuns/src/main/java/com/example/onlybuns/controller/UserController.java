@@ -20,6 +20,8 @@ import io.github.bucket4j.Bandwidth;
 import io.github.bucket4j.Bucket;
 import io.github.bucket4j.Refill;
 
+import java.security.Principal;
+import java.util.List;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.server.ResponseStatusException;
 
@@ -68,6 +70,10 @@ public class UserController {
             throw new UsernameNotFoundException("User not found: " + username);
         }
         return new UserInfoDTO(user);
+    }
+    @GetMapping("/getById/{id}")
+    public UserInfo getUserById(@PathVariable long id){
+        return service.getUserById(id);
     }
 
     @GetMapping("/userId/{id}")
@@ -150,6 +156,13 @@ public class UserController {
 
         return service.getFilteredUsers(name, email, minPosts, maxPosts, sortBy, sortOrder, page, size);
     }
+    @GetMapping("/users")
+    @PreAuthorize("isAuthenticated()")
+    public List<UserInfoDTO> getAllUsersForChat(Principal principal) {
+        String currentUsername = principal.getName();
+        return service.getAllUsersExcept(currentUsername);
+    }
+
 
 
 

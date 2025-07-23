@@ -16,12 +16,15 @@ import org.springframework.security.config.annotation.authentication.configurati
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import java.lang.Exception;
+
 
 
 @Configuration
@@ -49,29 +52,91 @@ public class SecurityConfig {
     }
 
     @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
+                // 1) Enable CORS
                 .cors(Customizer.withDefaults())
-            .addFilterBefore(loginRateLimitingFilter, UsernamePasswordAuthenticationFilter.class)
-            .csrf(csrf -> csrf.disable()) // Disable CSRF for stateless APIs
-            .authorizeHttpRequests(auth -> auth
-                .requestMatchers("/auth/welcome", "/auth/getByUsername",
-                "/post/{postId}/like", "/post/top5weekly","/post/{postId}/comment","/post/posts-by-user/{userId}","/auth/addNewUser",
-                "/auth/activate", "/auth/generateToken", "/post", "/post/**",
-                "/images/**","/api/care-locations","/followers/**", "/comments", "/auth/userId/{userId}", "/actuator/prometheus","/auth/change-password","/comments/{$postId}", "/actuator/**", "/api/data", "api/slow", "/actuator/health").permitAll()
-                    .requestMatchers(HttpMethod.DELETE, "/post/*").authenticated()
-                .requestMatchers("/auth/user/**").hasAuthority("ROLE_USER")
-                    .requestMatchers("/post/followedUserPosts/**").hasAuthority("ROLE_USER")
-                    .requestMatchers("/auth/admin/**","/admin/analytics/**").hasAuthority("ROLE_ADMIN")
-                    .requestMatchers("/post/{postId}/mark-for-advertising").hasAuthority("ROLE_ADMIN")
-                    .anyRequest().authenticated() // Protect all other endpoints
-            )
-            .sessionManagement(sess -> sess
-                .sessionCreationPolicy(SessionCreationPolicy.STATELESS) // No sessions
-            )
-            .authenticationProvider(authenticationProvider()) // Custom authentication provider
-            .addFilterBefore(authFilter, UsernamePasswordAuthenticationFilter.class) // Add JWT filter
-            ;
+
+                // 2) Rate-limit login requests before the UsernamePasswordAuthenticationFilter
+                .addFilterBefore(loginRateLimitingFilter, UsernamePasswordAuthenticationFilter.class)
+
+                // 3) Disable CSRF (stateless REST API)
+                .csrf(AbstractHttpConfigurer::disable)
+
+                // 4) URL authorization
+                .authorizeHttpRequests(auth -> auth
+
+                        // allow all OPTIONS preflight
+                        .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+
+                        // public/auth endpoints
+                        .requestMatchers(
+                                "/auth/welcome",
+                                "/auth/getByUsername",
+                                "/auth/getById/**",
+                                "/auth/addNewUser",
+                                "/auth/activate/**",
+                                "/auth/generateToken",
+                                "/auth/users",
+                                "/auth/userId/**"
+                        ).permitAll()
+
+                        // chat endpoints
+                        .requestMatchers(
+                                "/api/chat/group",
+                                "/api/chat/**","/api/chat/private/**"
+                        ).permitAll()
+
+                        // post-related public endpoints
+                        .requestMatchers(
+                                "/post",
+                                "/post/**",
+                                "/post/{postId}/like",
+                                "/post/{postId}/comment",
+                                "/post/top5weekly",
+                                "/post/posts-by-user/{userId}",
+                                "/post/posts-by-user/{userId}"
+                        ).permitAll()
+
+                        // images, followers, data, slow, health, ws, actuator
+                        .requestMatchers(
+                                "/images/{filename:.+}",
+                                "/images/**",
+                                "/followers/**",
+                                "/api/data",
+                                "/api/slow",
+                                "/ws/**",
+                                "/actuator/**",
+                                "/error"
+                        ).permitAll()
+
+                        // POSTs to private chat (if you want to allow even non-authenticated)
+                        //.requestMatchers(HttpMethod.POST, "/api/chat/private/**").permitAll()
+
+                        // secured deletion of posts
+                        .requestMatchers(HttpMethod.DELETE, "/post/*").authenticated()
+
+                        // USER-only endpoints
+                        .requestMatchers(
+                                "/auth/user/**",
+                                "/post/followedUserPosts/**"
+                        ).hasAuthority("ROLE_USER")
+
+                        // ADMIN-only
+                        .requestMatchers(
+                                "/auth/admin/**",
+                                "/admin/analytics/**",
+                                "/post/{postId}/mark-for-advertising",
+                                "/auth/admin/users"
+                        ).hasAuthority("ROLE_ADMIN")
+
+                        // everything else needs auth
+                        .anyRequest().authenticated()
+                )
+                .sessionManagement(sess -> sess
+                                .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .authenticationProvider(authenticationProvider())
+                .addFilterBefore(authFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }

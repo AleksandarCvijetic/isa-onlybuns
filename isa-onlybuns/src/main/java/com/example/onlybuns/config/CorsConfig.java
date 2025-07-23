@@ -6,6 +6,8 @@ import org.springframework.web.filter.CorsFilter;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
+import java.util.List;
+
 @Configuration
 public class CorsConfig {
 
@@ -14,6 +16,7 @@ public class CorsConfig {
         CorsConfiguration corsConfig = new CorsConfiguration();
         corsConfig.setAllowCredentials(true);
         corsConfig.addAllowedOrigin("http://localhost:5173"); // Vue.js frontend URL
+        corsConfig.setAllowedMethods(List.of("GET","POST","PUT","DELETE","OPTIONS"));
         corsConfig.addAllowedHeader("*");
         corsConfig.addAllowedMethod("*"); // Allow all HTTP methods (GET, POST, etc.)
 
