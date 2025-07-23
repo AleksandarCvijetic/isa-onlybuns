@@ -17,14 +17,21 @@ import java.util.Optional;
 @Repository
 public interface FollowersRepository extends JpaRepository<Followers, Long> {
     List<Followers> findByFollower_Id(long followerId);
+
     List<Followers> findByFollowee_Id(long followeeId);
+
     boolean existsByFollower_IdAndFollowee_Id(long followerId, long followee);
+
     long countByFollowee_Id(Long followeeId);
 
     @Query("SELECT COUNT(f) FROM Followers f WHERE f.followee.id = ?1 AND f.followedAt > ?2")
     long countNewFollowersForUserSinceLastLogin(Long userId, ZonedDateTime lastLogin);
+
     @Query("SELECT f.follower FROM Followers f WHERE f.followee.id = :userId")
     List<UserInfo> findFollowersOf(@Param("userId") Long userId);
+
+    @Query("SELECT f.followee FROM Followers f WHERE f.follower.id = :userId")
+    List<UserInfo> findFolloweesOf(@Param("userId") Long userId);
 
     List<Followers> findByFollowerId(Long followerId);
 

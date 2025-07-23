@@ -83,8 +83,7 @@ public class SecurityConfig {
                         // chat endpoints
                         .requestMatchers(
                                 "/api/chat/group",
-                                "/api/chat/**",
-                                HttpMethod.POST, "/api/chat/private/**"
+                                "/api/chat/**","/api/chat/private/**"
                         ).permitAll()
 
                         // post-related public endpoints
