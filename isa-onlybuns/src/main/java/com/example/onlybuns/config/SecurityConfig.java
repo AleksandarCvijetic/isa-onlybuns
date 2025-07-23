@@ -77,7 +77,8 @@ public class SecurityConfig {
                                 "/auth/addNewUser",
                                 "/auth/activate/**",
                                 "/auth/generateToken",
-                                "/auth/users"
+                                "/auth/users",
+                                "/auth/userId/**"
                         ).permitAll()
 
                         // chat endpoints
@@ -125,7 +126,8 @@ public class SecurityConfig {
                         .requestMatchers(
                                 "/auth/admin/**",
                                 "/admin/analytics/**",
-                                "/post/{postId}/mark-for-advertising"
+                                "/post/{postId}/mark-for-advertising",
+                                "/auth/admin/users"
                         ).hasAuthority("ROLE_ADMIN")
 
                         // everything else needs auth
