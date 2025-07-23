@@ -130,7 +130,11 @@ public class SecurityConfig {
 
                         // everything else needs auth
                         .anyRequest().authenticated()
-                );
+                )
+                .sessionManagement(sess -> sess
+                                .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .authenticationProvider(authenticationProvider())
+                .addFilterBefore(authFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }
