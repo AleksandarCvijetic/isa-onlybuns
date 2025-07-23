@@ -105,7 +105,8 @@ public class SecurityConfig {
                                 "/api/data",
                                 "/api/slow",
                                 "/ws/**",
-                                "/actuator/**"
+                                "/actuator/**",
+                                "/error"
                         ).permitAll()
 
                         // POSTs to private chat (if you want to allow even non-authenticated)
